@@ -1,32 +1,32 @@
-type spec = Describe of string * spec list | It of string * (unit -> unit)
+type spec = Single of string * (unit -> unit) | Group of string * spec list
+
 type result = Pass of string | Fail of string | Error of string * exn
-exception Check_failed
 
-let (|>) x f = f x
+exception Expectation_failed
 
-let it description func = It (description, func)
-let describe name specs = Describe (name, specs)
+let it description func = Single (description, func)
+let describe name specs = Group (name, specs)
 
 let contextualize context spec = match spec with
-  | It (description, func) -> It (context ^ " " ^ description, func)
-  | Describe (description, specs) -> Describe (context ^ " " ^ description, specs)
+  | Single (description, func) -> Single (context ^ " " ^ description, func)
+  | Group (description, specs) -> Group (context ^ " " ^ description, specs)
 
 let rec run spec = match spec with
-  | It (description, func) -> begin
+  | Single (description, func) -> begin
       try 
         begin
           func(); 
           [Pass description]
         end 
       with 
-      | Check_failed -> [Fail description]
+      | Expectation_failed -> [Fail description]
       | e -> [Error (description, e)]
     end
-  | Describe (description, specs) -> 
-      specs |> List.map (contextualize description) |> List.map run |> List.concat
+  | Group (description, specs) -> 
+      List.concat (List.map run (List.map (contextualize description) specs))
 
 let expect value predicate () =
   if predicate value then 
     () 
   else 
-    raise Check_failed
+    raise Expectation_failed

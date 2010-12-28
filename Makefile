@@ -1,14 +1,12 @@
-GEN_FILES = *.cm* *.a *.o test
+all: test.exe
+	./test.exe
 
-all: test
-	./test
-
-test: ospecl.cmxa test.ml
-	ocamlopt ospecl.cmxa test.ml -o test
+test.exe: ospecl.cmxa test.ml
+	ocamlopt ospecl.cmxa test.ml -o test.exe
 
 ospecl.cmxa: ospecl.mli ospecl.ml
 	ocamlopt ospecl.mli ospecl.ml -a -o ospecl.cmxa
 
 clean:
-	rm $(GEN_FILES)
+	rm *.cm* *.a *.o test.exe
 
