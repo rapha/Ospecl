@@ -1,14 +1,17 @@
 all: test.exe
-	./test.exe
+	ocamlrun -b test.exe
 
-test.exe: ospecl.cma test.ml
-	ocamlc ospecl.cma test.ml -o test.exe
+test.exe: ospecl.cma matcher.cma test_matcher.ml test.ml test_matchers.ml
+	ocamlc -g matcher.cma ospecl.cma test_matcher.ml test_matchers.ml test.ml -o test.exe
 
-ospecl.cma: ospecl.mli ospecl.ml
-	ocamlc ospecl.mli ospecl.ml -a -o ospecl.cma
+ospecl.cma: matcher.cma matchers.cma ospecl.mli ospecl.ml
+	ocamlc -g matcher.cma matchers.cma ospecl.mli ospecl.ml -a -o ospecl.cma
 
-ospecl.cmxa: ospecl.mli ospecl.ml
-	ocamlopt ospecl.mli ospecl.ml -a -o ospecl.cmxa
+matchers.cma: matcher.cma matchers.ml
+	ocamlc -g matcher.cma matchers.ml -a -o matchers.cma
+
+matcher.cma: matcher.ml
+	ocamlc -g matcher.mli matcher.ml -a -o matcher.cma
 
 clean:
 	rm *.cm* *.a *.o test.exe
