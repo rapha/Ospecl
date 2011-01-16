@@ -1,8 +1,8 @@
 all: test.exe
 	ocamlrun -b test.exe
 
-test.exe: ospecl.cma matcher.cma test_matcher.ml test.ml test_matchers.ml
-	ocamlc -g matcher.cma ospecl.cma test_matcher.ml test_matchers.ml test.ml -o test.exe
+test.exe: ospecl.cma matcher.cma test_matcher.ml test_ospecl.ml test_matchers.ml
+	ocamlc -g matcher.cma ospecl.cma test_matcher.ml test_matchers.ml test_ospecl.ml -o test.exe
 
 ospecl.cma: matcher.cma matchers.cma ospecl.mli ospecl.ml
 	ocamlc -g matcher.cma matchers.cma ospecl.mli ospecl.ml -a -o ospecl.cma
