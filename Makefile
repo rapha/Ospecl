@@ -1,5 +1,8 @@
-all: test.exe
-	ocamlrun -b test.exe
+all: run.cma test.exe
+	ocamlrun -b test.exe; bash test_run.sh
+
+run.cma: matchers.cma ospecl.cma run.ml
+	ocamlc -g matchers.cma ospecl.cma run.ml -a -o run.cma
 
 test.exe: ospecl.cma matcher.cma test_matcher.ml test_ospecl.ml test_matchers.ml
 	ocamlc -g matcher.cma ospecl.cma test_matcher.ml test_matchers.ml test_ospecl.ml -o test.exe
