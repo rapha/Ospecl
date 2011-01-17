@@ -25,9 +25,9 @@ open Matchers
 open Run
 
 let _ =
-  console begin
+  console [
     $spec_code
-  end
+  ]
 EOF
   ))
   actual_exit=$?
@@ -47,10 +47,8 @@ assert_stdout_and_exit_code_for_spec 'it "fails" (fun () -> failwith "fail")' \
   "Build failed. Passed: 0, Failed: 0, Errored: 1." 2
 
 assert_stdout_and_exit_code_for_spec '
-  describe "anything" [
-    it "passes" (fun () -> ());
-    it "passes again" (fun () -> ())
-  ]
+  it "passes something" (fun () -> ());
+  it "passes something else" (fun () -> ())
   ' \
   "Build successful. Passed: 2, Failed: 0, Errored: 0." 0
 
