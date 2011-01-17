@@ -10,7 +10,7 @@ function assert_equal {
   fi
 }
 
-function assert_stdout_and_exit_code {
+function assert_stdout_and_exit_code_for_spec {
   spec_code=$1
   expected_out=$2
   expected_exit=$3
@@ -37,16 +37,16 @@ EOF
 }
 
 
-assert_stdout_and_exit_code 'it "passes" (fun () -> ())' \
+assert_stdout_and_exit_code_for_spec 'it "passes" (fun () -> ())' \
   "Build successful. Passed: 1, Failed: 0, Errored: 0." 0
 
-assert_stdout_and_exit_code 'it "fails" (expect 1 (less_than 0))' \
+assert_stdout_and_exit_code_for_spec 'it "fails" (expect 1 (less_than 0))' \
   "Build failed. Passed: 0, Failed: 1, Errored: 0." 1
 
-assert_stdout_and_exit_code 'it "fails" (fun () -> failwith "fail")' \
+assert_stdout_and_exit_code_for_spec 'it "fails" (fun () -> failwith "fail")' \
   "Build failed. Passed: 0, Failed: 0, Errored: 1." 2
 
-assert_stdout_and_exit_code '
+assert_stdout_and_exit_code_for_spec '
   describe "anything" [
     it "passes" (fun () -> ());
     it "passes again" (fun () -> ())
@@ -54,7 +54,7 @@ assert_stdout_and_exit_code '
   ' \
   "Build successful. Passed: 2, Failed: 0, Errored: 0." 0
 
-assert_stdout_and_exit_code '
+assert_stdout_and_exit_code_for_spec '
   describe "anything" [
     it "passes" (fun () -> ());
     it "fails" (expect 1 (less_than 0));
