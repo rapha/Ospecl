@@ -1,7 +1,7 @@
 open Ospecl
 
 let console specs =
-  let results = List.concat (List.map eval specs) in
+  let results = eval specs in
   let (passed, failed, errored) = List.fold_left (fun (p, f, e) result -> 
     match result with
     | Result (_, Pass) -> (p+1, f, e)

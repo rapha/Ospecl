@@ -4,7 +4,7 @@ type spec
 type outcome =  Pass | Fail of string | Error of exn
 type result = Result of string * outcome
 (* events that occur during the execution of a spec *)
-type exec_event =
+type execution_event =
   | Describe_started of string
   | Describe_finished of string
   | It_started of string
@@ -18,7 +18,7 @@ val describe : string -> spec list -> spec
 (* put expectations about values in your test functions *)
 val expect: 'a -> 'a Matcher.t -> unit -> unit
 
-(* execute a spec with the given event listeners *)
-val exec: (exec_event -> unit) list -> spec -> unit
-(* evaluate a spec to get a list of the results *)
-val eval: spec -> result list
+(* execute specs with the given event listeners *)
+val exec: (execution_event -> unit) list -> spec list -> unit
+(* evaluate specs to get a list of the results *)
+val eval: spec list -> result list
