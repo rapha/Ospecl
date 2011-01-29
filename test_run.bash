@@ -1,17 +1,17 @@
 function assert_equal {
-  desc=$1
+  description=$1
   expected=$2
   actual=$3
 
   if [ "$expected" != "$actual" ]; then 
-    echo -n "$desc wrong. "
+    echo -n "$description wrong. "
     echo "Expected \"$expected\" but was \"$actual\""
     exit 1
   fi
 }
 
 function assert_stdout_and_exit_code_for_spec {
-  spec_code=$1
+  spec_src=$1
   expected_out=$2
   expected_exit=$3
 
@@ -22,11 +22,10 @@ function assert_stdout_and_exit_code_for_spec {
 
 open Ospecl
 open Matchers
-open Run
 
 let _ =
-  console [
-    $spec_code
+  Run.console [
+    $spec_src
   ]
 EOF
   ))
