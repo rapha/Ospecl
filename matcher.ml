@@ -1,4 +1,4 @@
-type match_result = Match of string | Mismatch of string
+type match_result = Matched of string | Mismatched of string
 
 type 'a t = {
   description: string;

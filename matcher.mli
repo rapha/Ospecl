@@ -1,6 +1,6 @@
 type 'a t
 
-type match_result = Match of string | Mismatch of string
+type match_result = Matched of string | Mismatched of string
 
 val make : string -> ('a -> match_result) -> 'a t
 
