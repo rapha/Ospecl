@@ -17,14 +17,12 @@ function assert_stdout_and_exit_code_for_spec {
 
   actual_out=$(ocaml <(cat <<EOF
 #load "ospecl.cma"
-#load "matchers.cma"
-#load "run.cma"
 
-open Ospecl
-open Matchers
+open Ospecl.Spec
+open Ospecl.Matchers
 
 let _ =
-  Run.console [
+  Ospecl.Run.console [
     $spec_src
   ]
 EOF

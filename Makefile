@@ -1,20 +1,23 @@
-all: run.cma test.byte
+all: test.byte
 	ocamlrun -b test.byte && bash test_run.bash
 
-run.cma: matchers.cma ospecl.cma run.ml
-	ocamlc -g matchers.cma ospecl.cma run.ml -a -o run.cma
+test.byte: ospecl.cma test_matcher.ml test_spec.ml test_matchers.ml
+	ocamlc -g ospecl.cma test_matcher.ml test_matchers.ml test_spec.ml -o test.byte
 
-test.byte: ospecl.cma matcher.cma test_matcher.ml test_ospecl.ml test_matchers.ml
-	ocamlc -g matcher.cma ospecl.cma test_matcher.ml test_matchers.ml test_ospecl.ml -o test.byte
+ospecl.cma: matcher.cmo matchers.cmo spec.cmo run.cmo
+	ocamlc -g -linkall -pack -o ospecl.cma matcher.cmo matchers.cmo spec.cmo run.cmo
 
-ospecl.cma: matcher.cma matchers.cma ospecl.mli ospecl.ml
-	ocamlc -g matcher.cma matchers.cma ospecl.mli ospecl.ml -a -o ospecl.cma
+matcher.cmo: matcher.mli matcher.ml
+	ocamlc -g -c matcher.mli matcher.ml
 
-matchers.cma: matcher.cma matchers.ml
-	ocamlc -g matcher.cma matchers.ml -a -o matchers.cma
+matchers.cmo: matchers.ml
+	ocamlc -g -c matchers.ml
 
-matcher.cma: matcher.ml
-	ocamlc -g matcher.mli matcher.ml -a -o matcher.cma
+spec.cmo: spec.ml
+	ocamlc -g -c spec.mli spec.ml
+
+run.cmo: run.ml
+	ocamlc -g -c run.ml
 
 clean:
 	rm *.cm* test.byte

@@ -1,6 +1,6 @@
 open Printf
-open Ospecl
-open Matchers
+open Ospecl.Spec
+open Ospecl.Matchers
 
 let test_eval_it () =
   assert (eval [] = []);

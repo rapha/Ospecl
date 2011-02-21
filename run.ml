@@ -1,4 +1,4 @@
-open Ospecl
+open Spec
 
 let console specs =
   let results = eval specs in

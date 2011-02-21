@@ -1,5 +1,5 @@
-open Matcher
-open Matchers
+open Ospecl.Matcher
+open Ospecl.Matchers
 
 type point = Point of int * int
 let string_of_point (Point (x,y)) =

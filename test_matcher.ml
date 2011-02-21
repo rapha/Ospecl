@@ -1,7 +1,7 @@
 open Printf
 
 let _ =
-  let module M = Matcher in
+  let module M = Ospecl.Matcher in
   let is_even = M.make "is even" (fun n -> 
     if n mod 2 = 0 then M.Matched "even" else M.Mismatched "odd"
   ) in
