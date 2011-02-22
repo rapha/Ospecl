@@ -1,5 +1,5 @@
 open Printf
-open Ospecl.Spec
+open Ospecl.Specify
 open Ospecl.Matchers
 
 let test_eval_it () =

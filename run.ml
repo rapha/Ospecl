@@ -1,4 +1,4 @@
-open Spec
+open Specify
 
 let console specs =
   let results = eval specs in

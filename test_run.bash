@@ -18,7 +18,7 @@ function assert_stdout_and_exit_code_for_spec {
   actual_out=$(ocaml <(cat <<EOF
 #load "ospecl.cma"
 
-open Ospecl.Spec
+open Ospecl.Specify
 open Ospecl.Matchers
 
 let _ =
