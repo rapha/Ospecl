@@ -26,13 +26,15 @@ let equal_to string_of expected =
       Mismatched (string_of actual)
   in make description test
 
-let approximately epsilon expected =
-  let description = "approximately " ^ (string_of_float expected) in
+let within epsilon expected =
+  let description = "within " ^ (string_of_float epsilon) ^ " of " ^ (string_of_float expected) in
   let test actual =
-    if (expected -. actual) < epsilon then
+    (* equality check deals with infinities *)
+    if expected = actual or (abs_float (expected -. actual)) < epsilon then
       Matched (string_of_float actual)
     else
       Mismatched (string_of_float actual)
+
   in make description test
 
 let equal_to_int = equal_to string_of_int

@@ -21,9 +21,13 @@ let test_equal_to () =
   assert (check (Point (1,2)) (equal_to_point (Point (1,2))) = Matched "(1,2)");
   assert (check (Point (1,2)) (equal_to_point (Point (3,4))) = Mismatched "(1,2)")
 
-let test_approximately () =
-  let approx = approximately 0.000001 in
-  assert (description_of (approx 0.9) = "approximately 0.9");
+let test_within () =
+  let approx = within 0.001 in
+  assert (description_of (approx 0.9) = "within 0.001 of 0.9");
+  assert (check 0.9 (approx 0.9) = Matched "0.9");
+  assert (check 0.0 (approx (-0.0)) = Matched "0.");
+  assert (check infinity (approx infinity) = Matched "inf");
+  assert (check neg_infinity (approx neg_infinity) = Matched "-inf");
   assert (check 0.8999999999999999 (approx 0.9) = Matched "0.9");
   assert (check 0.8 (approx 0.9) = Mismatched "0.8")
 
@@ -64,7 +68,7 @@ let _ =
   test_less_than ();
   test_not ();
   test_equal_to ();
-  test_approximately ();
+  test_within ();
   test_has_item ();
   test_every_item ();
   test_all_of ();
