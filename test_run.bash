@@ -37,11 +37,13 @@ EOF
 assert_stdout_and_exit_code_for_spec 'it "passes" (fun () -> ())' \
   "Build successful. Passed: 1, Failed: 0, Errored: 0." 0
 
-assert_stdout_and_exit_code_for_spec 'it "fails" (expect 1 (less_than 0))' \
-  "Build failed. Passed: 0, Failed: 1, Errored: 0." 1
+assert_stdout_and_exit_code_for_spec 'it "fails" (fun _ -> expect (less_than 0) 1)' \
+"FAIL: 'fails' because 'Expected less than 0 but was 1'
+Build failed. Passed: 0, Failed: 1, Errored: 0." 1
 
-assert_stdout_and_exit_code_for_spec 'it "fails" (fun () -> failwith "fail")' \
-  "Build failed. Passed: 0, Failed: 0, Errored: 1." 2
+assert_stdout_and_exit_code_for_spec 'it "errors" (fun () -> failwith "err")' \
+"ERROR: 'errors'
+Build failed. Passed: 0, Failed: 0, Errored: 1." 2
 
 assert_stdout_and_exit_code_for_spec '
   it "passes something" (fun () -> ());
@@ -50,10 +52,12 @@ assert_stdout_and_exit_code_for_spec '
   "Build successful. Passed: 2, Failed: 0, Errored: 0." 0
 
 assert_stdout_and_exit_code_for_spec '
-  describe "anything" [
+  describe "something" [
     it "passes" (fun () -> ());
-    it "fails" (expect 1 (less_than 0));
+    it "fails" (fun _ -> expect (less_than 0) 1);
     it "errors" (fun () -> failwith "no")
   ]
   ' \
-  "Build failed. Passed: 1, Failed: 1, Errored: 1." 3
+"FAIL: 'something fails' because 'Expected less than 0 but was 1'
+ERROR: 'something errors'
+Build failed. Passed: 1, Failed: 1, Errored: 1." 3

@@ -16,7 +16,7 @@ val it : string -> (unit -> unit) -> spec
 val describe : string -> spec list -> spec
 
 (* put expectations about values in your test functions *)
-val expect: 'a -> 'a Matcher.t -> unit -> unit
+val expect: 'a Matcher.t -> 'a -> unit
 
 (* execute specs with the given event listeners *)
 val exec: (execution_event -> unit) list -> spec list -> unit
