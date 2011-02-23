@@ -1,0 +1,16 @@
+matcher.cmo: matcher.cmi
+matcher.cmx: matcher.cmi
+matchers.cmo: matcher.cmi
+matchers.cmx: matcher.cmx
+run.cmo: specify.cmi
+run.cmx: specify.cmx
+specify.cmo: matcher.cmi specify.cmi
+specify.cmx: matcher.cmx specify.cmi
+test_matcher.cmo:
+test_matcher.cmx:
+test_matchers.cmo:
+test_matchers.cmx:
+test_specify.cmo:
+test_specify.cmx:
+matcher.cmi:
+specify.cmi: matcher.cmi
