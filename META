@@ -1,0 +1,4 @@
+description = "An BDD package for OCaml"
+requires = ""
+version = "1.0"
+archive(byte) = "ospecl.cma"
