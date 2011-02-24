@@ -1,5 +1,3 @@
-OCAMLC = ocamlc -g
-
 all: test
 
 test: test.byte
@@ -14,17 +12,25 @@ ospecl.cma: matcher.cmo matchers.cmo specify.cmo run.cmo
 clean:
 	rm *.cm* test.byte
 
-.PHONY: all clean test
 
+# simple file transforms
 .SUFFIXES: .mli .ml .cmi .cmo
-
 .mli.cmi:
 	$(OCAMLC) -c $<
-
 .ml.cmo:
 	$(OCAMLC) -c $<
 
+
+# autogenerate source dependencies
 Makefile.source_dependencies: *.ml *.mli
 	ocamldep *.ml *.mli >Makefile.source_dependencies
-
 include Makefile.source_dependencies
+
+
+# these targets are not files
+.PHONY: all clean test
+
+
+# definitions
+OCAMLC = ocamlc -g
+
