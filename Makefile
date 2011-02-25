@@ -12,6 +12,13 @@ ospecl.cma: matcher.cmo matchers.cmo specify.cmo run.cmo
 clean:
 	rm *.cm* test.byte
 
+install: ospecl.cma META
+	ocamlfind install ospecl ospecl.cmi ospecl.cma META
+
+uninstall:
+	ocamlfind remove ospecl
+
+
 
 # simple file transforms
 .SUFFIXES: .mli .ml .cmi .cmo
