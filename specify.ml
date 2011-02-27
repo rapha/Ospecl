@@ -48,7 +48,7 @@ let eval specs =
   in exec [recording_listener] specs;
   List.rev !results
 
-let expect matcher value =
+let expect value matcher =
   match Matcher.check value matcher with
   | Matcher.Matched _ -> ()
   | Matcher.Mismatched desc -> raise (Expectation_failed (Printf.sprintf "Expected %s but was %s" (Matcher.description_of matcher) desc))

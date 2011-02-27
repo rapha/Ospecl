@@ -64,6 +64,13 @@ let test_has_length () =
   assert (check [1;2] (has_length 2) = Matched "has length 2");
   assert (check [1] (has_length 2) = Mismatched "has length 1")
 
+let test_raises () =
+  assert (description_of (raises (Failure "no")) = "raises Failure(\"no\")");
+  assert (check (fun _ -> failwith "no") (raises (Failure "no")) = Matched "raised Failure(\"no\")");
+  assert (check (fun _ -> failwith "yes") (raises (Failure "no")) = Mismatched "raised Failure(\"yes\")");
+  assert (check (fun _ -> ()) (raises (Failure "no")) = Mismatched "no exception raised")
+
+
 let _ =
   test_less_than ();
   test_not ();
@@ -74,3 +81,4 @@ let _ =
   test_all_of ();
   test_any_of ();
   test_has_length ();
+  test_raises ()

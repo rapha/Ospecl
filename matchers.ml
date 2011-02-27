@@ -9,7 +9,7 @@ let less_than limit =
       Mismatched (string_of_int actual)
   in make description test
 
-let not' matcher = 
+let not' matcher =
   let description = "not " ^ description_of matcher in
   let test actual =
     match check actual matcher with
@@ -19,7 +19,7 @@ let not' matcher =
 
 let equal_to string_of expected =
   let description = string_of expected in
-  let test actual = 
+  let test actual =
     if expected = actual then
       Matched (string_of actual)
     else
@@ -39,12 +39,14 @@ let within epsilon expected =
 
 let equal_to_int = equal_to string_of_int
 let equal_to_string = equal_to (fun s -> s)
-let equal_to_bool = equal_to string_of_bool
 let equal_to_char = equal_to (fun c -> Printf.sprintf "%c" c)
+let equal_to_bool = equal_to string_of_bool
+let is_true = equal_to_bool true
+let is_false = equal_to_bool false
 
-let has_item matcher = 
+let has_item matcher =
   let description = "has item that " ^ description_of matcher in
-  let test items = 
+  let test items =
     match List.map (fun item -> check item matcher) items with
     | [] -> Mismatched ("no items")
     | (Matched _ :: _) as results | Mismatched _ :: results -> begin
@@ -54,12 +56,12 @@ let has_item matcher =
           | Mismatched _ :: rest -> has_item_in rest
         in
         has_item_in results
-      end 
+      end
   in make description test
 
-let every_item matcher = 
+let every_item matcher =
   let description = "every item " ^ description_of matcher in
-  let test items = 
+  let test items =
     match List.map (fun item -> check item matcher) items with
     | [] -> Matched "no items"
     | Matched _ :: results | (Mismatched _ :: _ as results) -> begin
@@ -84,7 +86,7 @@ let join separator = function
 
 let all_of matchers =
   let description = join " and " (List.map description_of matchers) in
-  let test actual = 
+  let test actual =
     match matchers with
     | [] -> Matched "no matchers"
     | first :: _ -> begin
@@ -120,10 +122,26 @@ let any_of matchers =
 
 let has_length expected_length =
   let description = "has length " ^ string_of_int expected_length in
-  let test items = 
+  let test items =
     let actual_length = List.length items in
     if actual_length = expected_length then
       Matched description
     else
       Mismatched ("has length " ^ string_of_int actual_length)
   in make description test
+
+let raises expected_exception =
+  let description = "raises " ^ (Printexc.to_string expected_exception) in
+  let test func =
+    try begin
+      func ();
+      Mismatched "no exception raised"
+    end
+    with actual_exception ->
+      let message = "raised " ^ Printexc.to_string actual_exception in
+      if actual_exception = expected_exception then
+        Matched message
+      else
+        Mismatched message
+  in make description test
+

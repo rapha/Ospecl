@@ -10,7 +10,7 @@ ospecl.cma: matcher.cmo matchers.cmo specify.cmo run.cmo
 	$(OCAMLC) -pack -o ospecl.cma matcher.cmo matchers.cmo specify.cmo run.cmo
 
 clean:
-	rm *.cm* test.byte
+	rm *.cm* test.byte Makefile.source_dependencies
 
 install: ospecl.cma META
 	ocamlfind install ospecl ospecl.cmi ospecl.cma META
