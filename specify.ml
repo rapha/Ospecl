@@ -20,22 +20,22 @@ let contextualize context spec = match spec with
   | Single (description, test_function) -> Single (context ^ " " ^ description, test_function)
   | Group (description, specs) -> Group (context ^ " " ^ description, specs)
 
-let rec exec listeners specs = 
+let rec exec listeners specs =
   let fire event = listeners |> List.iter ((|>) event) in
   List.iter (function
     | Single (description, test_function) -> begin
-        try 
+        try
           begin
             fire (It_started description);
-            test_function(); 
+            test_function();
             fire (It_finished (Result (description, Pass)))
-          end 
-        with 
+          end
+        with
         | Expectation_failed failure -> fire (It_finished (Result (description, Fail failure)))
         | e -> fire (It_finished (Result (description, Error e)))
       end
-    | Group (description, specs) -> 
-        fire (Describe_started description); 
+    | Group (description, specs) ->
+        fire (Describe_started description);
         specs |> List.map (contextualize description) |> exec listeners;
         fire (Describe_finished description)
   ) specs
@@ -50,5 +50,8 @@ let eval specs =
 
 let expect value matcher =
   match Matcher.check value matcher with
-  | Matcher.Matched _ -> ()
-  | Matcher.Mismatched desc -> raise (Expectation_failed (Printf.sprintf "Expected %s but was %s" (Matcher.description_of matcher) desc))
+  | Matcher.Matched _ ->
+      ()
+  | Matcher.Mismatched desc ->
+      let failure_msg = Printf.sprintf "Expected %s but was %s" (Matcher.description_of matcher) desc in
+      raise (Expectation_failed failure_msg)
