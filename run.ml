@@ -10,7 +10,7 @@ let console specs =
         let fail_line = Printf.sprintf "FAIL: '%s' because '%s'\n" desc problem in
         (out ^ fail_line, p, f+1, e)
     | Result (desc, Error ex) -> 
-        let error_line = Printf.sprintf "ERROR: '%s'\n" desc in
+        let error_line = Printf.sprintf "ERROR: '%s' because %s\n" desc (Printexc.to_string ex) in
         (out ^ error_line, p, f, e+1)
   ) ("", 0, 0, 0) results in
   let success = (failed = 0 && errored = 0) in

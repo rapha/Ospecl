@@ -42,7 +42,7 @@ assert_stdout_and_exit_code_for_spec 'it "fails" (fun _ -> expect 1 (less_than 0
 Build failed. Passed: 0, Failed: 1, Errored: 0." 1
 
 assert_stdout_and_exit_code_for_spec 'it "errors" (fun () -> failwith "err")' \
-"ERROR: 'errors'
+"ERROR: 'errors' because Failure(\"err\")
 Build failed. Passed: 0, Failed: 0, Errored: 1." 2
 
 assert_stdout_and_exit_code_for_spec '
@@ -59,5 +59,5 @@ assert_stdout_and_exit_code_for_spec '
   ]
   ' \
 "FAIL: 'something fails' because 'Expected less than 0 but was 1'
-ERROR: 'something errors'
+ERROR: 'something errors' because Failure(\"no\")
 Build failed. Passed: 1, Failed: 1, Errored: 1." 3
