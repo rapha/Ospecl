@@ -1,21 +1,20 @@
-function assert_equal {
+function assert_matches {
   description=$1
-  expected=$2
-  actual=$3
+  actual=$2
+  pattern=$3
 
-  if [ "$expected" != "$actual" ]; then 
+  if [[ -z $(echo "$actual" | grep "$pattern") ]]; then
     echo -n "$description wrong. "
-    echo "Expected \"$expected\" but was \"$actual\""
+    echo "Expected matches \"$pattern\" but was \"$actual\""
     exit 1
   fi
 }
 
-function assert_stdout_and_exit_code_for_spec {
+function execute_spec {
   spec_src=$1
-  expected_out=$2
-  expected_exit=$3
 
-  actual_out=$(ocaml <(cat <<EOF
+  ocaml <(cat <<EOF
+#load "unix.cma"
 #load "ospecl.cma"
 
 open Ospecl.Specify
@@ -26,38 +25,48 @@ let _ =
     $spec_src
   ]
 EOF
-  ))
-  actual_exit=$?
-
-  assert_equal "Exit code" $expected_exit $actual_exit
-  assert_equal "Standard output" "$expected_out" "$actual_out"
+  )
 }
 
+function assert_stdout_and_exit_code {
+  spec_src=$1
+  expected_out=$2
+  expected_exit=$3
 
-assert_stdout_and_exit_code_for_spec 'it "passes" (fun () -> ())' \
-  "Build successful. Passed: 1, Failed: 0, Errored: 0." 0
+  actual_out=$(execute_spec "$spec_src")
+  actual_exit=$?
 
-assert_stdout_and_exit_code_for_spec 'it "fails" (fun _ -> expect 1 (less_than 0))' \
-"FAIL: 'fails' because 'Expected less than 0 but was 1'
-Build failed. Passed: 0, Failed: 1, Errored: 0." 1
+  assert_matches "Exit code for $spec_src" $actual_exit $expected_exit 
+  assert_matches "Standard output for $spec_src" "$actual_out" "$expected_out"
+}
 
-assert_stdout_and_exit_code_for_spec 'it "errors" (fun () -> failwith "err")' \
-"ERROR: 'errors' because Failure(\"err\")
-Build failed. Passed: 0, Failed: 0, Errored: 1." 2
+assert_stdout_and_exit_code 'it "passes" (fun _ -> ())' \
+  "1 example(s), 0 failure(s)." \
+  0
 
-assert_stdout_and_exit_code_for_spec '
+assert_matches "logging output" $(execute_spec 'it "passes" (fun _ -> ())') "."
+
+assert_stdout_and_exit_code 'it "fails" (fun _ -> expect 1 (less_than 0))' \
+  "1 example(s), 1 failure(s)." \
+  1
+
+assert_stdout_and_exit_code 'it "errors" (fun () -> failwith "err")' \
+  "1 example(s), 1 failure(s)." \
+  2
+
+assert_stdout_and_exit_code '
   it "passes something" (fun () -> ());
   it "passes something else" (fun () -> ())
   ' \
-  "Build successful. Passed: 2, Failed: 0, Errored: 0." 0
+  "2 example(s), 0 failure(s)." \
+  0
 
-assert_stdout_and_exit_code_for_spec '
+assert_stdout_and_exit_code '
   describe "something" [
     it "passes" (fun () -> ());
     it "fails" (fun _ -> expect 1 (less_than 0));
     it "errors" (fun () -> failwith "no")
   ]
   ' \
-"FAIL: 'something fails' because 'Expected less than 0 but was 1'
-ERROR: 'something errors' because Failure(\"no\")
-Build failed. Passed: 1, Failed: 1, Errored: 1." 3
+  "3 example(s), 2 failure(s)." \
+  3

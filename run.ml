@@ -1,7 +1,10 @@
 open Specify
 
 let console specs =
+  let start_time = Unix.gettimeofday () in
   let results = eval specs in
+  let finish_time = Unix.gettimeofday () in
+  let duration = finish_time -. start_time in
   let (output, passed, failed, errored) = List.fold_left (fun (out, p, f, e) result -> 
     match result with
     | Result (_, Pass) -> 
@@ -13,17 +16,14 @@ let console specs =
         let error_line = Printf.sprintf "ERROR: '%s' because %s\n" desc (Printexc.to_string ex) in
         (out ^ error_line, p, f, e+1)
   ) ("", 0, 0, 0) results in
-  let success = (failed = 0 && errored = 0) in
 
-  let summary = Printf.sprintf "Build %s. Passed: %d, Failed: %d, Errored: %d.\n" 
-    (if success then "successful" else "failed") passed failed errored in
+  let examples = passed + failed + errored in
+  let failures = failed + errored in
 
   let exit_code = 0 + 
     (if failed > 0 then 1 else 0) + 
     (if errored > 0 then 2 else 0)
   in
 
-  print_endline (output ^ summary);
+  Printf.printf "%s\nFinished in %f seconds\n%d example(s), %d failure(s).\n" output duration examples failures;
   exit exit_code
-
-  
