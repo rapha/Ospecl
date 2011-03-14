@@ -5,10 +5,10 @@ type outcome =  Pass | Fail of string | Error of exn
 type result = Result of string * outcome
 (* events that occur during the execution of a spec *)
 type execution_event =
-  | Describe_started of string
-  | Describe_finished of string
-  | It_started of string
-  | It_finished of result
+  | Group_started of string
+  | Group_finished of string
+  | Example_started of string
+  | Example_finished of result
 
 (* build a single spec from a description and test function *)
 val it : string -> (unit -> unit) -> spec

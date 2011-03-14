@@ -1,50 +1,50 @@
-type spec = Single of string * (unit -> unit) | Group of string * spec list
+type spec = Example of string * (unit -> unit) | Group of string * spec list
 
 type outcome = Pass | Fail of string | Error of exn
 type result = Result of string * outcome
 
 type execution_event =
-  | Describe_started of string
-  | Describe_finished of string
-  | It_started of string
-  | It_finished of result
+  | Group_started of string
+  | Group_finished of string
+  | Example_started of string
+  | Example_finished of result
 
 exception Expectation_failed of string
 
 let (|>) x f = f x
 
-let it description test_function = Single (description, test_function)
+let it description test_function = Example (description, test_function)
 let describe name specs = Group (name, specs)
 
 let contextualize context spec = match spec with
-  | Single (description, test_function) -> Single (context ^ " " ^ description, test_function)
+  | Example (description, test_function) -> Example (context ^ " " ^ description, test_function)
   | Group (description, specs) -> Group (context ^ " " ^ description, specs)
 
 let rec exec listeners specs =
   let fire event = listeners |> List.iter ((|>) event) in
   List.iter (function
-    | Single (description, test_function) -> begin
+    | Example (description, test_function) -> begin
         try
           begin
-            fire (It_started description);
+            fire (Example_started description);
             test_function();
-            fire (It_finished (Result (description, Pass)))
+            fire (Example_finished (Result (description, Pass)))
           end
         with
-        | Expectation_failed failure -> fire (It_finished (Result (description, Fail failure)))
-        | e -> fire (It_finished (Result (description, Error e)))
+        | Expectation_failed failure -> fire (Example_finished (Result (description, Fail failure)))
+        | e -> fire (Example_finished (Result (description, Error e)))
       end
     | Group (description, specs) ->
-        fire (Describe_started description);
+        fire (Group_started description);
         specs |> List.map (contextualize description) |> exec listeners;
-        fire (Describe_finished description)
+        fire (Group_finished description)
   ) specs
 
 let eval specs =
   let results = ref [] in
   let recording_listener = function
-    | It_finished result -> results := (result :: !results)
-    | Describe_started _ | Describe_finished _ | It_started _ -> ()
+    | Example_finished result -> results := (result :: !results)
+    | Group_started _ | Group_finished _ | Example_started _ -> ()
   in exec [recording_listener] specs;
   List.rev !results
 
