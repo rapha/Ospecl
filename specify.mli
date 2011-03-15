@@ -1,10 +1,12 @@
 (* an executable description of a component's desired behavour *)
-type spec
+type spec = private Example of string * (unit -> unit) | Group of string * spec list
 (* information about how the component conforms to the spec *)
 type outcome =  Pass | Fail of string | Error of exn
 type result = Result of string * outcome
 (* events that occur during the execution of a spec *)
 type execution_event =
+  | Execution_started
+  | Execution_finished
   | Group_started of string
   | Group_finished of string
   | Example_started of string

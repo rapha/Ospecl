@@ -4,6 +4,8 @@ type outcome = Pass | Fail of string | Error of exn
 type result = Result of string * outcome
 
 type execution_event =
+  | Execution_started
+  | Execution_finished
   | Group_started of string
   | Group_finished of string
   | Example_started of string
@@ -44,7 +46,9 @@ let eval specs =
   let results = ref [] in
   let recording_listener = function
     | Example_finished result -> results := (result :: !results)
-    | Group_started _ | Group_finished _ | Example_started _ -> ()
+    | Group_started _ | Group_finished _
+    | Execution_started | Execution_finished
+    | Example_started _ -> ()
   in exec [recording_listener] specs;
   List.rev !results
 
