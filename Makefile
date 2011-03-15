@@ -35,4 +35,4 @@ include Makefile.source_dependencies
 .PHONY: all clean test
 
 # definitions
-OCAMLC = ocamlc -g
+OCAMLC = ocamlc -g -warn-error A
