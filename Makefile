@@ -1,16 +1,16 @@
 all: test
 
-test: test.byte
-	ocamlrun -b test.byte && bash test_run.bash
+test: unit_tests.byte
+	ocamlrun -b unit_tests.byte && bash test_console.bash
 
-test.byte: ospecl.cma test_matcher.cmo test_specify.cmo test_matchers.cmo
-	$(OCAMLC) -o test.byte unix.cma ospecl.cma test_matcher.cmo test_matchers.cmo test_specify.cmo
+unit_tests.byte: ospecl.cma test_matcher.cmo test_matchers.cmo test_run.cmo
+	$(OCAMLC) -o unit_tests.byte unix.cma ospecl.cma test_matcher.cmo test_matchers.cmo test_run.cmo
 
 ospecl.cma: matcher.cmo matchers.cmo specify.cmo run.cmo
 	$(OCAMLC) -pack -o ospecl.cma matcher.cmo matchers.cmo specify.cmo run.cmo
 
 clean:
-	rm *.cm* test.byte Makefile.source_dependencies
+	rm *.cm* *.byte Makefile.source_dependencies
 
 install: ospecl.cma META
 	ocamlfind install ospecl ospecl.cmi ospecl.cma META
