@@ -62,25 +62,10 @@ module Handle = struct
     | Example_finished (Result (_, outcome) as r) -> begin
         match outcome with
         | Pass -> ()
-        | Fail _ -> failures := r :: !failures
-        | Error _ -> ()
+        | Fail _ | Error _ -> failures := r :: !failures
       end
     | Execution_finished ->
         callback (List.rev !failures)
-    | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
-        ()
-
-  let error_report (callback: result list -> unit) =
-    let errors = ref [] in
-    function
-    | Example_finished (Result (_, outcome) as r) -> begin
-        match outcome with
-        | Pass -> ()
-        | Fail _ -> ()
-        | Error _ -> errors := r :: !errors
-      end
-    | Execution_finished ->
-        callback (List.rev !errors)
     | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
         ()
 
@@ -154,21 +139,37 @@ let console =
         let examples = passes + failures + errors in
         Printf.printf "%d example(s), %d failure(s), %d error(s)\n" examples failures errors
       );
-    Handle.failure_report
-      (List.iter 
-        (function 
-          | Result (description, Fail {expected; was}) -> 
-            Printf.printf "FAIL: %s. Expected %s but was %s.\n" description expected was
-          | Result _ -> ()
-        )
+    Handle.failure_report 
+      (fun results ->
+        let report items = 
+          let numbered = items |> List.fold_left (fun results result -> (List.length results + 1, result)::results) [] in
+          numbered |> List.iter (fun (i, result) ->
+              let format = format_of_string ("  %d) %s\n      %s\n") in
+              match result with
+              | Result (desc, Pass) -> ()
+              | Result (desc, Fail {expected; was}) ->
+                  let explanation = Printf.sprintf "Expected %s but was %s" expected was in
+                  Printf.printf format i desc explanation
+              | Result (desc, Error err) ->
+                  let explanation = Printexc.to_string err in
+                  Printf.printf format i desc explanation
+          )
+        in
+        let failed = results |> List.filter (function (Result (_, Fail _)) -> true | _ -> false) in
+        let errored = results |> List.filter (function (Result (_, Error _)) -> true | _ -> false) in
+        begin match failed with
+        | [] -> ()
+        | _ -> 
+            Printf.printf "\nFailures\n\n";
+            report failed;
+        end;
+        begin match errored with
+        | [] -> ()
+        | _ -> 
+            Printf.printf "\nErrors\n\n";
+            report errored;
+        end;
       );
-    Handle.error_report
-      (List.iter 
-        (function 
-          | Result (description, Error ex) -> 
-            Printf.printf "ERROR: %s. %s. %s.\n" description (Printexc.to_string ex)
-          | Result _ -> ()
-        )
-      );
+
     Handle.exit_code exit
   ]
