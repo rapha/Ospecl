@@ -9,12 +9,16 @@ let assert_emits values handler events =
   List.iter handle events;
   assert (!emitted = values)
 
+let pass_result = Result ("", Pass)
+let fail_result = Result ("", Fail {expected="good"; was="bad"})
+let error_result = Result ("", Error Not_found)
+
 let test_progress =
   assert_emits ['.'; 'F'; 'E'; '\n']
     Handle.progress [
-      Example_finished (Result ("", Pass));
-      Example_finished (Result ("", Fail "bad"));
-      Example_finished (Result ("", Error Not_found));
+      Example_finished pass_result;
+      Example_finished (fail_result);
+      Example_finished error_result;
       Execution_finished;
     ];
 
@@ -31,21 +35,21 @@ let test_summary =
     Execution_finished
   ];
   assert_emits [(1, 0, 0)] Handle.summary [
-    Example_finished (Result ("", Pass));
+    Example_finished pass_result;
     Execution_finished
   ];
   assert_emits [(0, 1, 0)] Handle.summary [
-    Example_finished (Result ("", Fail "bad"));
+    Example_finished fail_result;
     Execution_finished
   ];
   assert_emits [(0, 0, 1)] Handle.summary [
-    Example_finished (Result ("", Error Not_found));
+    Example_finished error_result;
     Execution_finished
   ];
   assert_emits [(2, 1, 0)] Handle.summary [
-    Example_finished (Result ("", Pass));
-    Example_finished (Result ("", Pass));
-    Example_finished (Result ("", Fail "bad"));
+    Example_finished pass_result;
+    Example_finished pass_result;
+    Example_finished fail_result;
     Execution_finished
   ]
 
@@ -54,24 +58,24 @@ let test_exit_code =
     Execution_finished
   ];
   assert_emits [0] Handle.exit_code [
-    Example_finished (Result ("", Pass));
+    Example_finished pass_result;
     Execution_finished
   ];
   assert_emits [1] Handle.exit_code [
-    Example_finished (Result ("", Fail "bad"));
+    Example_finished fail_result;
     Execution_finished
   ];
   assert_emits [2] Handle.exit_code [
-    Example_finished (Result ("", Error Not_found));
+    Example_finished error_result;
     Execution_finished
   ];
   assert_emits [3] Handle.exit_code [
-    Example_finished (Result ("", Pass));
-    Example_finished (Result ("", Pass));
-    Example_finished (Result ("", Fail "bad"));
-    Example_finished (Result ("", Fail "bad"));
-    Example_finished (Result ("", Error Not_found));
-    Example_finished (Result ("", Error Not_found));
+    Example_finished pass_result;
+    Example_finished pass_result;
+    Example_finished fail_result;
+    Example_finished fail_result;
+    Example_finished error_result;
+    Example_finished error_result;
     Execution_finished
   ]
 
@@ -87,12 +91,11 @@ let test_total_time =
   | Some duration -> assert (duration >= 0.)
 
 let test_each_result =
-  assert_emits
-    [Result ("", Pass); Result("", Fail "bad"); Result ("", Error Not_found)]
+  assert_emits [pass_result; fail_result; error_result]
     Handle.each_result [
-      Example_finished (Result ("", Pass));
-      Example_finished (Result ("", Fail "bad"));
-      Example_finished (Result ("", Error Not_found));
+      Example_finished pass_result;
+      Example_finished fail_result;
+      Example_finished error_result;
     ]
 
 let test_eval =
@@ -108,8 +111,8 @@ let test_eval =
           let bulb = make_bulb true in
           describe "when toggled" begin
             let bulb = toggle bulb in [
-              it "is off" (fun _ -> expect (is_off bulb) (equal_to_bool true));
-              it "is not on" (fun _ -> expect (is_on bulb) (not' (equal_to_bool true)));
+              it "is off" (fun _ -> is_off bulb |> should (be (equal_to_bool true)));
+              it "is not on" (fun _ -> is_on bulb |> should (not' (be (equal_to_bool true))));
             ]
           end
         ]
@@ -127,12 +130,12 @@ let test_exec =
   let specs = [
     describe "1" [
       describe "+" [
-        it "1 = 2" (fun _ -> expect (1+1) (equal_to_int 2));
-        it "2 = 3" (fun _ -> expect (1+2) (equal_to_int 3));
+        it "1 = 2" (fun _ -> 1 + 1 |> should (be (equal_to_int 2)));
+        it "2 = 3" (fun _ -> 1 + 2 |> should (be (equal_to_int 3)));
       ];
       describe "-" [
-        it "1 = 0" (fun _ -> expect (1-1) (equal_to_int 0));
-        it "2 = -1" (fun _ -> expect (1-2) (equal_to_int (-1)));
+        it "1 = 0" (fun _ -> 1 - 1 |> should (be (equal_to_int 0)));
+        it "2 = -1" (fun _ -> 1 - 2 |> should (be (equal_to_int (-1))));
       ];
     ]
   ]

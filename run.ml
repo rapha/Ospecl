@@ -56,6 +56,34 @@ module Handle = struct
     | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
         ()
 
+  let failure_report callback =
+    let failures = ref [] in
+    function
+    | Example_finished (Result (_, outcome) as r) -> begin
+        match outcome with
+        | Pass -> ()
+        | Fail _ -> failures := r :: !failures
+        | Error _ -> ()
+      end
+    | Execution_finished ->
+        callback (List.rev !failures)
+    | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
+        ()
+
+  let error_report (callback: result list -> unit) =
+    let errors = ref [] in
+    function
+    | Example_finished (Result (_, outcome) as r) -> begin
+        match outcome with
+        | Pass -> ()
+        | Fail _ -> ()
+        | Error _ -> errors := r :: !errors
+      end
+    | Execution_finished ->
+        callback (List.rev !errors)
+    | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
+        ()
+
   let exit_code callback =
     let code = ref 0 in
     function
@@ -92,8 +120,8 @@ let exec handlers specs =
               Pass
             end
           with
-          | Expectation_failed failure ->
-              Fail failure
+          | Expectation_failed (expected, was) ->
+              Fail {expected = expected; was = was}
           | e ->
               Error e
         in
@@ -117,13 +145,30 @@ let eval specs =
   exec [Handle.each_result remember] specs;
   !results
 
-let console = exec [
-  Handle.progress print_char;
-  Handle.total_time (Printf.printf "Finished in %f seconds\n");
-  Handle.summary
-    (fun (passes, failures, errors) ->
-      let examples = passes + failures + errors in
-      Printf.printf "%d example(s), %d failure(s), %d error(s)\n" examples failures errors
-    );
-  Handle.exit_code exit
-]
+let console = 
+  exec [
+    Handle.progress print_char;
+    Handle.total_time (Printf.printf "Finished in %f seconds\n");
+    Handle.summary
+      (fun (passes, failures, errors) ->
+        let examples = passes + failures + errors in
+        Printf.printf "%d example(s), %d failure(s), %d error(s)\n" examples failures errors
+      );
+    Handle.failure_report
+      (List.iter 
+        (function 
+          | Result (description, Fail {expected; was}) -> 
+            Printf.printf "FAIL: %s. Expected %s but was %s.\n" description expected was
+          | Result _ -> ()
+        )
+      );
+    Handle.error_report
+      (List.iter 
+        (function 
+          | Result (description, Error ex) -> 
+            Printf.printf "ERROR: %s. %s. %s.\n" description (Printexc.to_string ex)
+          | Result _ -> ()
+        )
+      );
+    Handle.exit_code exit
+  ]
