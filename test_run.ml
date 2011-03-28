@@ -9,67 +9,51 @@ let assert_emits values handler events =
   List.iter handle events;
   assert (!emitted = values)
 
-let pass_result = Result ("", Pass)
-let fail_result = Result ("", Fail (Expectation_failed "woops", "trace..."))
-
-let test_progress =
-  assert_emits ['.'; 'F'; '\n']
-    Handle.progress [
-      Example_finished pass_result;
-      Example_finished (fail_result);
-      Execution_finished;
-    ];
-
-  assert_emits []
-    Handle.progress [
-      Execution_started;
-      Group_started "g";
-      Group_finished "g";
-      Example_started "e"
-  ]
+let pass = Result ("", Pass)
+let fail = Result ("", Fail (Expectation_failed "woops", "trace..."))
 
 let test_summary =
-  assert_emits [(0, 0)] Handle.summary [
+  assert_emits [(0, 0)] Handler.summary [
     Execution_finished
   ];
-  assert_emits [(1, 0)] Handle.summary [
-    Example_finished pass_result;
+  assert_emits [(1, 0)] Handler.summary [
+    Example_finished pass;
     Execution_finished
   ];
-  assert_emits [(0, 1)] Handle.summary [
-    Example_finished fail_result;
+  assert_emits [(0, 1)] Handler.summary [
+    Example_finished fail;
     Execution_finished
   ];
-  assert_emits [(2, 1)] Handle.summary [
-    Example_finished pass_result;
-    Example_finished pass_result;
-    Example_finished fail_result;
+  assert_emits [(2, 1)] Handler.summary [
+    Example_finished pass;
+    Example_finished pass;
+    Example_finished fail;
     Execution_finished
   ]
 
 let test_exit_code =
-  assert_emits [0] Handle.exit_code [
+  assert_emits [0] Handler.exit_code [
     Execution_finished
   ];
-  assert_emits [0] Handle.exit_code [
-    Example_finished pass_result;
+  assert_emits [0] Handler.exit_code [
+    Example_finished pass;
     Execution_finished
   ];
-  assert_emits [1] Handle.exit_code [
-    Example_finished fail_result;
+  assert_emits [1] Handler.exit_code [
+    Example_finished fail;
     Execution_finished
   ];
-  assert_emits [1] Handle.exit_code [
-    Example_finished pass_result;
-    Example_finished pass_result;
-    Example_finished fail_result;
-    Example_finished fail_result;
+  assert_emits [1] Handler.exit_code [
+    Example_finished pass;
+    Example_finished pass;
+    Example_finished fail;
+    Example_finished fail;
     Execution_finished
   ]
 
 let test_total_time =
   let emitted = ref None in
-  let handler = Handle.total_time (fun duration -> emitted := Some duration) in
+  let handler = Handler.total_time (fun duration -> emitted := Some duration) in
 
   handler Execution_started;
   handler Execution_finished;
@@ -79,10 +63,10 @@ let test_total_time =
   | Some duration -> assert (duration >= 0.)
 
 let test_each_result =
-  assert_emits [pass_result; fail_result]
-    Handle.each_result [
-      Example_finished pass_result;
-      Example_finished fail_result;
+  assert_emits [pass; fail]
+    Handler.each_result [
+      Example_finished pass;
+      Example_finished fail;
     ]
 
 let test_eval =

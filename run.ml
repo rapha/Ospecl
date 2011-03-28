@@ -8,20 +8,8 @@ type execution_event =
   | Example_started of string
   | Example_finished of result
 
-module Handle = struct
+module Handler = struct
   type handler = execution_event -> unit
-
-  let char_of_outcome = function
-    | Pass -> '.'
-    | Fail _ -> 'F'
-
-  let progress callback = function
-    | Example_finished (Result (_, outcome)) ->
-        callback (char_of_outcome outcome)
-    | Execution_finished ->
-        callback '\n'
-    | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
-        ()
 
   let total_time callback =
     let start = ref None in
@@ -122,13 +110,17 @@ let eval specs =
   let remember result =
     results := !results @ [result]
   in
-  exec [Handle.each_result remember] specs;
+  exec [Handler.each_result remember] specs;
   !results
 
 let console = 
   exec [
-    Handle.progress print_char;
-    Handle.failure_report 
+    Handler.each_result (function
+      | Result (_, Pass) -> print_char '.'
+      | Result (_, Fail _) -> print_char 'F'
+    );
+    (function Execution_finished -> print_newline () | _ -> ());
+    Handler.failure_report 
       (fun results ->
         let indexed items = 
           let indices = Array.init (List.length items) (fun i -> i) |> Array.to_list in
@@ -136,7 +128,7 @@ let console =
         in
         let report (index, result) = 
           match result with
-          | Result (desc, Pass) -> ()
+          | Result (_, Pass) -> ()
           | Result (desc, Fail (ex, trace)) ->
               let indent = "\n         " in
               let indented_trace = trace |> Str.global_replace (Str.regexp "\n") indent in
@@ -148,12 +140,12 @@ let console =
           Printf.printf "\nFailures:\n\n";
           failed |> indexed |> List.iter report
       );
-    Handle.total_time (Printf.printf "Finished in %f seconds\n");
-    Handle.summary
+    Handler.total_time (Printf.printf "Finished in %f seconds\n");
+    Handler.summary
       (fun (passes, failures) ->
         let examples = passes + failures in
         Printf.printf "%d example(s), %d failure(s)\n" examples failures
       );
 
-    Handle.exit_code exit
+    Handler.exit_code exit
   ]

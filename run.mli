@@ -7,13 +7,13 @@ type execution_event =
   | Example_started of string
   | Example_finished of Specify.result  (* always fired after corresponding Example_started *)
 
-(* Listeners respond to execution events *)
-
 (*
- * Handlers must be side-effecting to be useful,
- * which kinda sucks, but not sure how to avoid it.
+ * Handlers respond to execution events.
  *
- * Users (of the lib) can add their own handlers.
+ * They must be side-effecting to be useful, 
+ * which kinda sucks but I'm not sure how to avoid it.
+ *
+ * Users (of the lib) can use their own handlers too.
  *
  * Event ordering guarantees are as follows:
  * - Execution_started will come first
@@ -22,13 +22,16 @@ type execution_event =
  * - Example_finished will come after the corresponding Example_started
  *)
 
-module Handle : sig
+module Handler : sig
   type handler = execution_event -> unit
-  val progress : (char -> unit) -> execution_event -> unit
-  val total_time : (float -> unit) -> execution_event -> unit
-  val summary : ((int * int) -> unit) -> execution_event -> unit
-  val exit_code: (int -> unit) -> execution_event -> unit
-  val each_result : (Specify.result -> unit) -> execution_event -> unit
+  (* passes the total duration (in seconds) to the given function once execution has finished *)
+  val total_time : (float -> unit) -> handler
+  (* passes the count of passes and failures to the given function at the end *)
+  val summary : ((int * int) -> unit) -> handler
+  (* passes the appropriate exit code (1 for any failures, 0 for all passes) to the given function at the end *)
+  val exit_code: (int -> unit) -> handler
+  (* passes each result to the given function as they occur *)
+  val each_result : (Specify.result -> unit) -> handler
 end
 
 (* execute specs with the given event listeners *)
