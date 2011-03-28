@@ -30,5 +30,5 @@ val exec : handler list -> Specify.spec list -> unit
 (* get the results of executing the given specs *)
 val eval : Specify.spec list -> Specify.result list
 
-(* typical set of handlers for running from the console *)
+(* default set of handlers for running from the console *)
 val console : Specify.spec list -> unit
