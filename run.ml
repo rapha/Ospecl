@@ -144,7 +144,11 @@ let console =
     Handlers.summary
       (fun (passes, failures) ->
         let examples = passes + failures in
-        Printf.printf "%d example(s), %d failure(s)\n" examples failures
+        let pluralise noun = function
+          | 1 -> noun
+          | _ -> (noun ^ "s")
+        in
+        Printf.printf "%d %s, %d %s\n" examples (pluralise "example" examples) failures (pluralise "failure" failures)
       );
 
     Handlers.exit_code exit

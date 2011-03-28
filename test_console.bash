@@ -56,6 +56,6 @@ spec='
 
 assert_stdout "$spec" "^.F$"
 assert_stdout "$spec" "^Finished in [0-9]\+\.[0-9]\+ seconds$"
-assert_stdout "$spec" "^2 example(s), 1 failure(s)$"
+assert_stdout "$spec" "^2 examples, 1 failure$"
 
 assert_exit_code "$spec" 1
