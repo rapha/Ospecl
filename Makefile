@@ -4,7 +4,7 @@ test: unit_tests.byte
 	ocamlrun -b unit_tests.byte && bash test_console.bash
 
 unit_tests.byte: ospecl.cma test_matcher.cmo test_matchers.cmo test_run.cmo
-	$(OCAMLC) -o unit_tests.byte unix.cma ospecl.cma test_matcher.cmo test_matchers.cmo test_run.cmo
+	$(OCAMLC) -o unit_tests.byte str.cma unix.cma ospecl.cma test_matcher.cmo test_matchers.cmo test_run.cmo
 
 ospecl.cma: matcher.cmo matchers.cmo specify.cmo run.cmo
 	$(OCAMLC) -pack -o ospecl.cma matcher.cmo matchers.cmo specify.cmo run.cmo
@@ -24,7 +24,7 @@ uninstall:
 .mli.cmi:
 	$(OCAMLC) -c $<
 .ml.cmo:
-	$(OCAMLC) -c unix.cma $<
+	$(OCAMLC) -c str.cma unix.cma $<
 
 # autogenerate source dependencies
 Makefile.source_dependencies: *.ml *.mli

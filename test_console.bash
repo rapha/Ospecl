@@ -14,6 +14,7 @@ function execute_spec {
   spec_src=$1
 
   ocaml <(cat <<EOF
+#load "str.cma"
 #load "unix.cma"
 #load "ospecl.cma"
 

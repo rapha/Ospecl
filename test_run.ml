@@ -10,7 +10,7 @@ let assert_emits values handler events =
   assert (!emitted = values)
 
 let pass_result = Result ("", Pass)
-let fail_result = Result ("", Fail (Expectation_failed "woops"))
+let fail_result = Result ("", Fail (Expectation_failed "woops", "trace..."))
 
 let test_progress =
   assert_emits ['.'; 'F'; '\n']

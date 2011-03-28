@@ -5,7 +5,7 @@ type spec = private Example of string * (unit -> unit) | Group of string * spec 
 exception Expectation_failed of string
 
 (* information about how the component conforms to the spec *)
-type outcome =  Pass | Fail of exn
+type outcome =  Pass | Fail of exn * string
 type result = Result of string * outcome
 
 (* build a single spec from a description and test function *)

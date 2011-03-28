@@ -102,7 +102,8 @@ let exec handlers specs =
             end
           with
           | e ->
-              Fail e
+              let backtrace = Printexc.get_backtrace () in
+              Fail (e,backtrace)
         in
         fire (Example_finished (Result (description, outcome)))
       end
@@ -129,22 +130,23 @@ let console =
     Handle.progress print_char;
     Handle.failure_report 
       (fun results ->
-        let report items = 
+        let indexed items = 
           let indices = Array.init (List.length items) (fun i -> i) |> Array.to_list in
-          let indexed = List.combine indices items in
-          indexed |> List.iter (fun (i, result) ->
-              let fmt = format_of_string ("  %d) %s\n     %s\n\n") in
-              match result with
-              | Result (desc, Pass) -> ()
-              | Result (desc, Fail ex) ->
-                  let explanation = Printexc.to_string ex in
-                  Printf.printf fmt (i+1) desc explanation
-          )
+          List.combine indices items 
+        in
+        let report (index, result) = 
+          match result with
+          | Result (desc, Pass) -> ()
+          | Result (desc, Fail (ex, trace)) ->
+              let indent = "\n         " in
+              let indented_trace = trace |> Str.global_replace (Str.regexp "\n") indent in
+              let explanation = (Printexc.to_string ex ^ indent ^ indented_trace) in
+              Printf.printf "  %d) %s\n       %s\n\n" (index+1) desc explanation
         in
         let failed = results |> List.filter (function (Result (_, Fail _)) -> true | _ -> false) in
         if List.length failed > 0 then
           Printf.printf "\nFailures:\n\n";
-          report failed
+          failed |> indexed |> List.iter report
       );
     Handle.total_time (Printf.printf "Finished in %f seconds\n");
     Handle.summary
