@@ -25,7 +25,7 @@ module Handlers : sig
   val each_result : (Specify.result -> unit) -> handler
 end
 
-(* execute specs with the given event listeners *)
+(* execute specs with the given event handlers *)
 val exec : handler list -> Specify.spec list -> unit
 (* get the results of executing the given specs *)
 val eval : Specify.spec list -> Specify.result list
