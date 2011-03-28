@@ -8,9 +8,9 @@ type execution_event =
   | Example_started of string
   | Example_finished of result
 
-module Handler = struct
-  type handler = execution_event -> unit
+type handler = execution_event -> unit
 
+module Handlers = struct
   let total_time callback =
     let start = ref None in
     function
@@ -110,17 +110,17 @@ let eval specs =
   let remember result =
     results := !results @ [result]
   in
-  exec [Handler.each_result remember] specs;
+  exec [Handlers.each_result remember] specs;
   !results
 
 let console = 
   exec [
-    Handler.each_result (function
+    Handlers.each_result (function
       | Result (_, Pass) -> print_char '.'
       | Result (_, Fail _) -> print_char 'F'
     );
     (function Execution_finished -> print_newline () | _ -> ());
-    Handler.failure_report 
+    Handlers.failure_report 
       (fun results ->
         let indexed items = 
           let indices = Array.init (List.length items) (fun i -> i) |> Array.to_list in
@@ -140,12 +140,12 @@ let console =
           Printf.printf "\nFailures:\n\n";
           failed |> indexed |> List.iter report
       );
-    Handler.total_time (Printf.printf "Finished in %f seconds\n");
-    Handler.summary
+    Handlers.total_time (Printf.printf "Finished in %f seconds\n");
+    Handlers.summary
       (fun (passes, failures) ->
         let examples = passes + failures in
         Printf.printf "%d example(s), %d failure(s)\n" examples failures
       );
 
-    Handler.exit_code exit
+    Handlers.exit_code exit
   ]

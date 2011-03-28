@@ -13,18 +13,18 @@ let pass = Result ("", Pass)
 let fail = Result ("", Fail (Expectation_failed "woops", "trace..."))
 
 let test_summary =
-  assert_emits [(0, 0)] Handler.summary [
+  assert_emits [(0, 0)] Handlers.summary [
     Execution_finished
   ];
-  assert_emits [(1, 0)] Handler.summary [
+  assert_emits [(1, 0)] Handlers.summary [
     Example_finished pass;
     Execution_finished
   ];
-  assert_emits [(0, 1)] Handler.summary [
+  assert_emits [(0, 1)] Handlers.summary [
     Example_finished fail;
     Execution_finished
   ];
-  assert_emits [(2, 1)] Handler.summary [
+  assert_emits [(2, 1)] Handlers.summary [
     Example_finished pass;
     Example_finished pass;
     Example_finished fail;
@@ -32,18 +32,18 @@ let test_summary =
   ]
 
 let test_exit_code =
-  assert_emits [0] Handler.exit_code [
+  assert_emits [0] Handlers.exit_code [
     Execution_finished
   ];
-  assert_emits [0] Handler.exit_code [
+  assert_emits [0] Handlers.exit_code [
     Example_finished pass;
     Execution_finished
   ];
-  assert_emits [1] Handler.exit_code [
+  assert_emits [1] Handlers.exit_code [
     Example_finished fail;
     Execution_finished
   ];
-  assert_emits [1] Handler.exit_code [
+  assert_emits [1] Handlers.exit_code [
     Example_finished pass;
     Example_finished pass;
     Example_finished fail;
@@ -53,7 +53,7 @@ let test_exit_code =
 
 let test_total_time =
   let emitted = ref None in
-  let handler = Handler.total_time (fun duration -> emitted := Some duration) in
+  let handler = Handlers.total_time (fun duration -> emitted := Some duration) in
 
   handler Execution_started;
   handler Execution_finished;
@@ -64,7 +64,7 @@ let test_total_time =
 
 let test_each_result =
   assert_emits [pass; fail]
-    Handler.each_result [
+    Handlers.each_result [
       Example_finished pass;
       Example_finished fail;
     ]

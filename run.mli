@@ -9,21 +9,12 @@ type execution_event =
 
 (*
  * Handlers respond to execution events.
- *
- * They must be side-effecting to be useful, 
- * which kinda sucks but I'm not sure how to avoid it.
- *
- * Users (of the lib) can use their own handlers too.
- *
- * Event ordering guarantees are as follows:
- * - Execution_started will come first
- * - Execution_finished will come last
- * - Group_finished will come after the corresponding Group_started
- * - Example_finished will come after the corresponding Example_started
+ * They must be side-effecting to be useful. 
+ * Users may use their own custom handlers too.
  *)
+type handler = execution_event -> unit
 
-module Handler : sig
-  type handler = execution_event -> unit
+module Handlers : sig
   (* passes the total duration (in seconds) to the given function once execution has finished *)
   val total_time : (float -> unit) -> handler
   (* passes the count of passes and failures to the given function at the end *)
@@ -35,7 +26,7 @@ module Handler : sig
 end
 
 (* execute specs with the given event listeners *)
-val exec : (execution_event -> unit) list -> Specify.spec list -> unit
+val exec : handler list -> Specify.spec list -> unit
 (* get the results of executing the given specs *)
 val eval : Specify.spec list -> Specify.result list
 
