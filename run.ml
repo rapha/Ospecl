@@ -14,7 +14,6 @@ module Handle = struct
   let char_of_outcome = function
     | Pass -> '.'
     | Fail _ -> 'F'
-    | Error _ -> 'E'
 
   let progress callback = function
     | Example_finished (Result (_, outcome)) ->
@@ -43,16 +42,14 @@ module Handle = struct
   let summary callback =
     let passes = ref 0 in
     let failures = ref 0 in
-    let errors = ref 0 in
     function
     | Example_finished (Result (_, outcome)) -> begin
         match outcome with
         | Pass -> incr passes
         | Fail _ -> incr failures
-        | Error _ -> incr errors
       end
     | Execution_finished ->
-        callback (!passes, !failures, !errors)
+        callback (!passes, !failures)
     | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
         ()
 
@@ -62,7 +59,7 @@ module Handle = struct
     | Example_finished (Result (_, outcome) as r) -> begin
         match outcome with
         | Pass -> ()
-        | Fail _ | Error _ -> failures := r :: !failures
+        | Fail _ -> failures := r :: !failures
       end
     | Execution_finished ->
         callback (List.rev !failures)
@@ -75,8 +72,7 @@ module Handle = struct
     | Example_finished (Result (_, outcome)) -> begin
         match outcome with
         | Pass -> ()
-        | Fail _ -> code := !code lor 0b01
-        | Error _ -> code := !code lor 0b10
+        | Fail _ -> code := 1
       end
     | Execution_finished ->
         callback !code
@@ -105,10 +101,8 @@ let exec handlers specs =
               Pass
             end
           with
-          | Expectation_failed (expected, was) ->
-              Fail {expected = expected; was = was}
           | e ->
-              Error e
+              Fail e
         in
         fire (Example_finished (Result (description, outcome)))
       end
@@ -133,42 +127,30 @@ let eval specs =
 let console = 
   exec [
     Handle.progress print_char;
-    Handle.total_time (Printf.printf "Finished in %f seconds\n");
-    Handle.summary
-      (fun (passes, failures, errors) ->
-        let examples = passes + failures + errors in
-        Printf.printf "%d example(s), %d failure(s), %d error(s)\n" examples failures errors
-      );
     Handle.failure_report 
       (fun results ->
         let report items = 
-          let numbered = items |> List.fold_left (fun results result -> (List.length results + 1, result)::results) [] in
-          numbered |> List.iter (fun (i, result) ->
-              let format = format_of_string ("  %d) %s\n      %s\n") in
+          let indices = Array.init (List.length items) (fun i -> i) |> Array.to_list in
+          let indexed = List.combine indices items in
+          indexed |> List.iter (fun (i, result) ->
+              let fmt = format_of_string ("  %d) %s\n     %s\n\n") in
               match result with
               | Result (desc, Pass) -> ()
-              | Result (desc, Fail {expected; was}) ->
-                  let explanation = Printf.sprintf "Expected %s but was %s" expected was in
-                  Printf.printf format i desc explanation
-              | Result (desc, Error err) ->
-                  let explanation = Printexc.to_string err in
-                  Printf.printf format i desc explanation
+              | Result (desc, Fail ex) ->
+                  let explanation = Printexc.to_string ex in
+                  Printf.printf fmt (i+1) desc explanation
           )
         in
         let failed = results |> List.filter (function (Result (_, Fail _)) -> true | _ -> false) in
-        let errored = results |> List.filter (function (Result (_, Error _)) -> true | _ -> false) in
-        begin match failed with
-        | [] -> ()
-        | _ -> 
-            Printf.printf "\nFailures\n\n";
-            report failed;
-        end;
-        begin match errored with
-        | [] -> ()
-        | _ -> 
-            Printf.printf "\nErrors\n\n";
-            report errored;
-        end;
+        if List.length failed > 0 then
+          Printf.printf "\nFailures:\n\n";
+          report failed
+      );
+    Handle.total_time (Printf.printf "Finished in %f seconds\n");
+    Handle.summary
+      (fun (passes, failures) ->
+        let examples = passes + failures in
+        Printf.printf "%d example(s), %d failure(s)\n" examples failures
       );
 
     Handle.exit_code exit

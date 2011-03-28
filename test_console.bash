@@ -38,7 +38,7 @@ function assert_stdout {
 
 function assert_exit_code {
   spec_src=$1
-  expected_exit=$3
+  expected_exit=$2
 
   out=$(execute_spec "$spec_src")
   actual_exit=$?
@@ -50,14 +50,11 @@ spec='
   describe "something" [
     it "passes" (fun () -> ());
     it "fails" (fun _ -> 1 |> should (be (less_than 0)));
-    it "errors" (fun () -> raise Not_found)
   ]
   '
 
-assert_stdout "$spec" "^.FE$"
+assert_stdout "$spec" "^.F$"
 assert_stdout "$spec" "^Finished in [0-9]\+\.[0-9]\+ seconds$"
-assert_stdout "$spec" "^3 example(s), 1 failure(s), 1 error(s)$"
-#assert_stdout "$spec" "^FAIL: something fails. Expected less than 0 but was 1.$"
-#assert_stdout "$spec" "^ERROR: something errors. Not_found.$"
+assert_stdout "$spec" "^2 example(s), 1 failure(s)$"
 
-assert_exit_code "$spec" 3
+assert_exit_code "$spec" 1

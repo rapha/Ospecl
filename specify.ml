@@ -1,9 +1,8 @@
 type spec = Example of string * (unit -> unit) | Group of string * spec list
 
-type failure_description = {expected: string; was: string}
-exception Expectation_failed of string * string
+exception Expectation_failed of string
 
-type outcome = Pass | Fail of failure_description | Error of exn
+type outcome = Pass | Fail of exn
 type result = Result of string * outcome
 
 let it description example = Example (description, example)
@@ -18,7 +17,8 @@ let should matcher value =
   | Matcher.Matched _ ->
       ()
   | Matcher.Mismatched desc ->
-      raise (Expectation_failed (Matcher.description_of matcher, desc))
+      let message = Printf.sprintf "Expected %s but got %s" (Matcher.description_of matcher) desc in
+      raise (Expectation_failed message)
 
 let (|>) x f = f x
 let be matcher = matcher

@@ -26,7 +26,7 @@ module Handle : sig
   type handler = execution_event -> unit
   val progress : (char -> unit) -> execution_event -> unit
   val total_time : (float -> unit) -> execution_event -> unit
-  val summary : ((int * int * int) -> unit) -> execution_event -> unit
+  val summary : ((int * int) -> unit) -> execution_event -> unit
   val exit_code: (int -> unit) -> execution_event -> unit
   val each_result : (Specify.result -> unit) -> execution_event -> unit
 end

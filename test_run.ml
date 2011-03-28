@@ -10,15 +10,13 @@ let assert_emits values handler events =
   assert (!emitted = values)
 
 let pass_result = Result ("", Pass)
-let fail_result = Result ("", Fail {expected="good"; was="bad"})
-let error_result = Result ("", Error Not_found)
+let fail_result = Result ("", Fail (Expectation_failed "woops"))
 
 let test_progress =
-  assert_emits ['.'; 'F'; 'E'; '\n']
+  assert_emits ['.'; 'F'; '\n']
     Handle.progress [
       Example_finished pass_result;
       Example_finished (fail_result);
-      Example_finished error_result;
       Execution_finished;
     ];
 
@@ -31,22 +29,18 @@ let test_progress =
   ]
 
 let test_summary =
-  assert_emits [(0, 0, 0)] Handle.summary [
+  assert_emits [(0, 0)] Handle.summary [
     Execution_finished
   ];
-  assert_emits [(1, 0, 0)] Handle.summary [
+  assert_emits [(1, 0)] Handle.summary [
     Example_finished pass_result;
     Execution_finished
   ];
-  assert_emits [(0, 1, 0)] Handle.summary [
+  assert_emits [(0, 1)] Handle.summary [
     Example_finished fail_result;
     Execution_finished
   ];
-  assert_emits [(0, 0, 1)] Handle.summary [
-    Example_finished error_result;
-    Execution_finished
-  ];
-  assert_emits [(2, 1, 0)] Handle.summary [
+  assert_emits [(2, 1)] Handle.summary [
     Example_finished pass_result;
     Example_finished pass_result;
     Example_finished fail_result;
@@ -65,17 +59,11 @@ let test_exit_code =
     Example_finished fail_result;
     Execution_finished
   ];
-  assert_emits [2] Handle.exit_code [
-    Example_finished error_result;
-    Execution_finished
-  ];
-  assert_emits [3] Handle.exit_code [
+  assert_emits [1] Handle.exit_code [
     Example_finished pass_result;
     Example_finished pass_result;
     Example_finished fail_result;
     Example_finished fail_result;
-    Example_finished error_result;
-    Example_finished error_result;
     Execution_finished
   ]
 
@@ -91,11 +79,10 @@ let test_total_time =
   | Some duration -> assert (duration >= 0.)
 
 let test_each_result =
-  assert_emits [pass_result; fail_result; error_result]
+  assert_emits [pass_result; fail_result]
     Handle.each_result [
       Example_finished pass_result;
       Example_finished fail_result;
-      Example_finished error_result;
     ]
 
 let test_eval =
