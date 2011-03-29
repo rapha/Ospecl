@@ -2,8 +2,7 @@
 type spec = private Example of string * (unit -> unit) | Group of string * spec list
 
 (* information about how the component conforms to the spec *)
-type outcome =  Pass | Fail of exn
-type result = Result of string * outcome
+type result =  Pass of string | Fail of string * exn
 
 (* build a single spec from a description and test function *)
 val it : string -> (unit -> unit) -> spec

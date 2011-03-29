@@ -9,8 +9,8 @@ let assert_emits values handler events =
   List.iter handle events;
   assert (!emitted = values)
 
-let pass = Result ("", Pass)
-let fail = Result ("", Fail Not_found)
+let pass = Pass ""
+let fail = Fail ("", Not_found)
 
 let test_summary =
   assert_emits [(0, 0)] Handlers.summary [
@@ -91,8 +91,8 @@ let test_eval =
     ]
   in
   let expected_results = [
-    Result ("a light bulb that is on when toggled is off", Pass);
-    Result ("a light bulb that is on when toggled is not on", Pass)
+    Pass "a light bulb that is on when toggled is off";
+    Pass "a light bulb that is on when toggled is not on";
   ]
   in
   assert (eval specs = expected_results)
@@ -116,15 +116,15 @@ let test_exec =
     Group_started "1";
       Group_started "1 +";
         Example_started "1 + 1 = 2";
-        Example_finished (Result ("1 + 1 = 2", Pass));
+        Example_finished (Pass "1 + 1 = 2");
         Example_started "1 + 2 = 3";
-        Example_finished (Result ("1 + 2 = 3", Pass));
+        Example_finished (Pass "1 + 2 = 3");
       Group_finished "1 +";
       Group_started "1 -";
         Example_started "1 - 1 = 0";
-        Example_finished (Result ("1 - 1 = 0", Pass));
+        Example_finished (Pass "1 - 1 = 0");
         Example_started "1 - 2 = -1";
-        Example_finished (Result("1 - 2 = -1",Pass));
+        Example_finished (Pass "1 - 2 = -1");
       Group_finished "1 -";
     Group_finished "1";
     Execution_finished;

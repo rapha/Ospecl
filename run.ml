@@ -31,9 +31,9 @@ module Handlers = struct
     let passes = ref 0 in
     let failures = ref 0 in
     function
-    | Example_finished (Result (_, outcome)) -> begin
-        match outcome with
-        | Pass -> incr passes
+    | Example_finished result -> begin
+        match result with
+        | Pass _ -> incr passes
         | Fail _ -> incr failures
       end
     | Execution_finished ->
@@ -44,10 +44,10 @@ module Handlers = struct
   let failure_report callback =
     let failures = ref [] in
     function
-    | Example_finished (Result (_, outcome) as r) -> begin
-        match outcome with
-        | Pass -> ()
-        | Fail _ -> failures := r :: !failures
+    | Example_finished result -> begin
+        match result with
+        | Pass _ -> ()
+        | Fail _ -> failures := result :: !failures
       end
     | Execution_finished ->
         callback (List.rev !failures)
@@ -57,9 +57,9 @@ module Handlers = struct
   let exit_code callback =
     let code = ref 0 in
     function
-    | Example_finished (Result (_, outcome)) -> begin
-        match outcome with
-        | Pass -> ()
+    | Example_finished result -> begin
+        match result with
+        | Pass _ -> ()
         | Fail _ -> code := 1
       end
     | Execution_finished ->
@@ -82,17 +82,17 @@ let exec handlers specs =
   let rec exec_spec = function
     | Example (description, example) -> begin
         fire (Example_started description);
-        let outcome =
+        let result =
           try
             begin
               example ();
-              Pass
+              Pass description
             end
           with
-          | e ->
-              Fail e
+          | ex ->
+              Fail (description, ex)
         in
-        fire (Example_finished (Result (description, outcome)))
+        fire (Example_finished result)
       end
     | Group (description, specs) ->
         fire (Group_started description);
@@ -115,8 +115,8 @@ let eval specs =
 let console = 
   exec [
     Handlers.each_result (function
-      | Result (_, Pass) -> print_char '.'
-      | Result (_, Fail _) -> print_char 'F'
+      | Pass _ -> print_char '.'
+      | Fail _ -> print_char 'F'
     );
     (function Execution_finished -> print_newline () | _ -> ());
     Handlers.failure_report 
@@ -127,11 +127,11 @@ let console =
         in
         let report (index, result) = 
           match result with
-          | Result (_, Pass) -> ()
-          | Result (desc, Fail ex) ->
+          | Pass _ -> ()
+          | Fail (desc, ex) ->
               Printf.printf "  %d) %s\n\n" (index+1) desc
         in
-        let failed = results |> List.filter (function (Result (_, Fail _)) -> true | _ -> false) in
+        let failed = results |> List.filter (function Fail _ -> true | Pass _ -> false) in
         if List.length failed > 0 then
           Printf.printf "\nFailures:\n\n";
           failed |> indexed |> List.iter report

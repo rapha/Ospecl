@@ -2,8 +2,7 @@ type spec = Example of string * (unit -> unit) | Group of string * spec list
 
 exception Expectation_failed of string
 
-type outcome = Pass | Fail of exn
-type result = Result of string * outcome
+type result = Pass of string | Fail of string * exn
 
 let it description example = Example (description, example)
 let describe name specs = Group (name, specs)
