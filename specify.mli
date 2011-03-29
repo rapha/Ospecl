@@ -16,10 +16,15 @@ val describe : string -> spec list -> spec
 (* add context to the description of a spec *)
 val contextualize : string -> spec -> spec
 
-
-(* put expectations about values in your test functions *)
-val should : 'a Matcher.t -> 'a -> unit
-
-(* used togeter with should, e.g. 1 + 1 |> should (be (equal_to 2)) *)
-val be : 'a Matcher.t -> 'a Matcher.t
+(* 
+ * Handy functions to pass values to matchers in a somewhat literate style
+ *
+ * e.g.
+ * 1 + 1 |> is (less_than 3)
+ * [1;2;3] |> has (all_of [every_item (less_than 5); length_of 3])
+ * (fun _ -> failwith "no") |> does (raise_exn (Failure "no"))
+ *)
+val is: 'a Matcher.t -> 'a -> unit
+val has: 'a list Matcher.t -> 'a list -> unit
+val does: 'a Matcher.t -> 'a -> unit
 val (|>) : 'a -> ('a -> 'b) -> 'b

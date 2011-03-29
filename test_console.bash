@@ -50,7 +50,7 @@ function assert_exit_code {
 spec='
   describe "something" [
     it "passes" (fun () -> ());
-    it "fails" (fun _ -> 1 |> should (be (less_than 0)));
+    it "fails" (fun _ -> 1 |> is (less_than 0));
   ]
   '
 

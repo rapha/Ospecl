@@ -12,7 +12,7 @@ let contextualize context spec = match spec with
   | Example (description, example) -> Example (context ^ " " ^ description, example)
   | Group (description, specs) -> Group (context ^ " " ^ description, specs)
 
-let should matcher value =
+let apply matcher value =
   match Matcher.check value matcher with
   | Matcher.Matched _ ->
       ()
@@ -21,4 +21,6 @@ let should matcher value =
       raise (Expectation_failed message)
 
 let (|>) x f = f x
-let be matcher = matcher
+let is = apply
+let has = apply
+let does = apply

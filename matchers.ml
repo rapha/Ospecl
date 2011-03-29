@@ -41,8 +41,8 @@ let equal_to_int = equal_to string_of_int
 let equal_to_string = equal_to (fun s -> s)
 let equal_to_char = equal_to (fun c -> Printf.sprintf "%c" c)
 let equal_to_bool = equal_to string_of_bool
-let is_true = equal_to_bool true
-let is_false = equal_to_bool false
+let true' = equal_to_bool true
+let false' = equal_to_bool false
 
 let has_item matcher =
   let description = "has item that " ^ description_of matcher in
@@ -130,16 +130,16 @@ let has_length expected_length =
       Mismatched ("has length " ^ string_of_int actual_length)
   in make description test
 
-let raises expected_exception =
-  let description = "raises " ^ (Printexc.to_string expected_exception) in
+let raise_exn expected =
+  let description = "raises " ^ (Printexc.to_string expected) in
   let test func =
     try begin
       func ();
       Mismatched "no exception raised"
     end
-    with actual_exception ->
-      let message = "raised " ^ Printexc.to_string actual_exception in
-      if actual_exception = expected_exception then
+    with actual ->
+      let message = "raised " ^ Printexc.to_string actual in
+      if actual = expected then
         Matched message
       else
         Mismatched message

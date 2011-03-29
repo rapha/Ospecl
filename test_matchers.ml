@@ -65,10 +65,10 @@ let test_has_length () =
   assert (check [1] (has_length 2) = Mismatched "has length 1")
 
 let test_raises () =
-  assert (description_of (raises (Failure "no")) = "raises Failure(\"no\")");
-  assert (check (fun _ -> failwith "no") (raises (Failure "no")) = Matched "raised Failure(\"no\")");
-  assert (check (fun _ -> failwith "yes") (raises (Failure "no")) = Mismatched "raised Failure(\"yes\")");
-  assert (check (fun _ -> ()) (raises (Failure "no")) = Mismatched "no exception raised")
+  assert (description_of (raise_exn (Failure "no")) = "raises Failure(\"no\")");
+  assert (check (fun _ -> failwith "no") (raise_exn (Failure "no")) = Matched "raised Failure(\"no\")");
+  assert (check (fun _ -> failwith "yes") (raise_exn (Failure "no")) = Mismatched "raised Failure(\"yes\")");
+  assert (check (fun _ -> ()) (raise_exn (Failure "no")) = Mismatched "no exception raised")
 
 
 let _ =
