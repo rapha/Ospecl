@@ -120,7 +120,7 @@ let any_of matchers =
       end
   in make description test
 
-let has_length expected_length =
+let length_of expected_length =
   let description = "has length " ^ string_of_int expected_length in
   let test items =
     let actual_length = List.length items in

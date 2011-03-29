@@ -59,10 +59,10 @@ let test_any_of () =
   assert (check (-6) not_one_to_ten = Matched "-6 is less than 1");
   assert (check 1 (any_of []) = Mismatched "no matchers")
 
-let test_has_length () =
-  assert (description_of (has_length 2) = "has length 2");
-  assert (check [1;2] (has_length 2) = Matched "has length 2");
-  assert (check [1] (has_length 2) = Mismatched "has length 1")
+let test_length_of () =
+  assert (description_of (length_of 2) = "has length 2");
+  assert (check [1;2] (length_of 2) = Matched "has length 2");
+  assert (check [1] (length_of 2) = Mismatched "has length 1")
 
 let test_raises () =
   assert (description_of (raise_exn (Failure "no")) = "raises Failure(\"no\")");
@@ -80,5 +80,5 @@ let _ =
   test_every_item ();
   test_all_of ();
   test_any_of ();
-  test_has_length ();
+  test_length_of ();
   test_raises ()
