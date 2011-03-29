@@ -2,7 +2,7 @@ type spec = Example of string * (unit -> unit) | Group of string * spec list
 
 exception Expectation_failed of string
 
-type outcome = Pass | Fail of exn * string
+type outcome = Pass | Fail of exn
 type result = Result of string * outcome
 
 let it description example = Example (description, example)

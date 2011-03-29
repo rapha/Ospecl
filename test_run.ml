@@ -10,7 +10,7 @@ let assert_emits values handler events =
   assert (!emitted = values)
 
 let pass = Result ("", Pass)
-let fail = Result ("", Fail (Expectation_failed "woops", "trace..."))
+let fail = Result ("", Fail Not_found)
 
 let test_summary =
   assert_emits [(0, 0)] Handlers.summary [

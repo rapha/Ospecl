@@ -90,8 +90,7 @@ let exec handlers specs =
             end
           with
           | e ->
-              let backtrace = Printexc.get_backtrace () in
-              Fail (e,backtrace)
+              Fail e
         in
         fire (Example_finished (Result (description, outcome)))
       end
@@ -129,7 +128,7 @@ let console =
         let report (index, result) = 
           match result with
           | Result (_, Pass) -> ()
-          | Result (desc, Fail (ex, trace)) ->
+          | Result (desc, Fail ex) ->
               Printf.printf "  %d) %s\n\n" (index+1) desc
         in
         let failed = results |> List.filter (function (Result (_, Fail _)) -> true | _ -> false) in
