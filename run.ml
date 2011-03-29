@@ -130,10 +130,7 @@ let console =
           match result with
           | Result (_, Pass) -> ()
           | Result (desc, Fail (ex, trace)) ->
-              let indent = "\n         " in
-              let indented_trace = trace |> Str.global_replace (Str.regexp "\n") indent in
-              let explanation = (Printexc.to_string ex ^ indent ^ indented_trace) in
-              Printf.printf "  %d) %s\n       %s\n\n" (index+1) desc explanation
+              Printf.printf "  %d) %s\n\n" (index+1) desc
         in
         let failed = results |> List.filter (function (Result (_, Fail _)) -> true | _ -> false) in
         if List.length failed > 0 then
