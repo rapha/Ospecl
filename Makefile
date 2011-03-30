@@ -3,11 +3,11 @@ all: test
 test: unit_tests.byte
 	ocamlrun -b unit_tests.byte && bash test_console.bash
 
-unit_tests.byte: ospecl.cma test_matcher.cmo test_matchers.cmo test_run.cmo
-	$(OCAMLC) -o unit_tests.byte unix.cma ospecl.cma test_matcher.cmo test_matchers.cmo test_run.cmo
+unit_tests.byte: ospecl.cma test_matcher.cmo test_matchers.cmo test_spec.cmo test_run.cmo
+	$(OCAMLC) -o unit_tests.byte unix.cma ospecl.cma test_matcher.cmo test_matchers.cmo test_spec.cmo test_run.cmo
 
-ospecl.cma: matcher.cmo matchers.cmo specify.cmo run.cmo
-	$(OCAMLC) -pack -o ospecl.cma matcher.cmo matchers.cmo specify.cmo run.cmo
+ospecl.cma: matcher.cmo matchers.cmo spec.cmo run.cmo
+	$(OCAMLC) -pack -o ospecl.cma matcher.cmo matchers.cmo spec.cmo run.cmo
 
 clean:
 	rm *.cm* *.byte Makefile.source_dependencies

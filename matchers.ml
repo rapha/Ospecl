@@ -145,3 +145,6 @@ let raise_exn expected =
         Mismatched message
   in make description test
 
+let is matcher = matcher
+let has matcher = matcher
+let does matcher = matcher

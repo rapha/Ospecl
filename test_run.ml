@@ -1,5 +1,6 @@
 open Printf
-open Ospecl.Specify
+open Ospecl.Spec
+open Ospecl.Spec.Exec
 open Ospecl.Run
 open Ospecl.Matchers
 
@@ -70,23 +71,22 @@ let test_each_result =
     ]
 
 let test_eval =
-  let specs =
+  let spec =
     (* dummy component just for demonstration *)
     let make_bulb on = on in
     let toggle bulb = not bulb in
     let is_off bulb = not bulb in
     let is_on bulb = bulb in
-    [
-      describe "a light bulb" [
-        describe "that is on" [
-          let bulb = make_bulb true in
-          describe "when toggled" begin
-            let bulb = toggle bulb in [
-              it "is off" (fun _ -> is_off bulb |> is (equal_to_bool true));
-              it "is not on" (fun _ -> is_on bulb |> is (not' (equal_to_bool true)));
-            ]
-          end
-        ]
+
+    describe "a light bulb" [
+      describe "that is on" [
+        let bulb = make_bulb true in
+        describe "when toggled" begin
+          let bulb = toggle bulb in [
+            it "is off" (fun _ -> is_off bulb =~ is true');
+            it "is not on" (fun _ -> is_on bulb =~ is (not' true'));
+          ]
+        end
       ]
     ]
   in
@@ -95,18 +95,18 @@ let test_eval =
     Pass "a light bulb that is on when toggled is not on";
   ]
   in
-  assert (eval specs = expected_results)
+  assert (eval spec = expected_results)
 
 let test_exec =
   let specs = [
     describe "1" [
       describe "+" [
-        it "1 = 2" (fun _ -> 1 + 1 |> is (equal_to_int 2));
-        it "2 = 3" (fun _ -> 1 + 2 |> is (equal_to_int 3));
+        it "1 = 2" (fun _ -> 1 + 1 =~ is (equal_to_int 2));
+        it "2 = 3" (fun _ -> 1 + 2 =~ is (equal_to_int 3));
       ];
       describe "-" [
-        it "1 = 0" (fun _ -> 1 - 1 |> is (equal_to_int 0));
-        it "2 = -1" (fun _ -> 1 - 2 |> is (equal_to_int (-1)));
+        it "1 = 0" (fun _ -> 1 - 1 =~ is (equal_to_int 0));
+        it "2 = -1" (fun _ -> 1 - 2 =~ is (equal_to_int (-1)));
       ];
     ]
   ]
@@ -133,7 +133,7 @@ let test_exec =
   let log_to record event = record := !record @ [event] in
   let record1, record2 = ref [], ref [] in
 
-  exec [log_to record1; log_to record2] specs;
+  execute [log_to record1; log_to record2] specs;
 
   assert (!record1 = expected_events);
   assert (!record2 = expected_events)

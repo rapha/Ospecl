@@ -18,7 +18,7 @@ function execute_spec {
 #load "unix.cma"
 #load "ospecl.cma"
 
-open Ospecl.Specify
+open Ospecl.Spec
 open Ospecl.Matchers
 
 let _ =
@@ -50,7 +50,7 @@ function assert_exit_code {
 spec='
   describe "something" [
     it "passes" (fun () -> ());
-    it "fails" (fun _ -> 1 |> is (less_than 0));
+    it "fails" (fun _ -> 1 =~ is (less_than 0));
   ]
   '
 

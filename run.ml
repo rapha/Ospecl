@@ -1,16 +1,8 @@
-open Specify
-
-type execution_event =
-  | Execution_started
-  | Execution_finished
-  | Group_started of string
-  | Group_finished of string
-  | Example_started of string
-  | Example_finished of result
-
-type handler = execution_event -> unit
+open Spec
 
 module Handlers = struct
+  open Spec.Exec
+
   let total_time callback =
     let start = ref None in
     function
@@ -75,54 +67,17 @@ module Handlers = struct
 
 end
 
-let exec handlers specs =
-  let fire event =
-    List.iter (function handle -> handle event) handlers
-  in
-  let rec exec_spec = function
-    | Example (description, example) -> begin
-        fire (Example_started description);
-        let result =
-          try
-            begin
-              example ();
-              Pass description
-            end
-          with
-          | ex ->
-              Fail (description, ex)
-        in
-        fire (Example_finished result)
-      end
-    | Group (description, specs) ->
-        fire (Group_started description);
-        let contextualized = List.map (contextualize description) specs in
-        List.iter exec_spec contextualized;
-        fire (Group_finished description)
-  in
-  fire Execution_started;
-  List.iter exec_spec specs;
-  fire Execution_finished
-
-let eval specs =
-  let results = ref [] in
-  let remember result =
-    results := !results @ [result]
-  in
-  exec [Handlers.each_result remember] specs;
-  !results
-
 let console = 
-  exec [
+  Exec.execute [
     Handlers.each_result (function
       | Pass _ -> print_char '.'
       | Fail _ -> print_char 'F'
     );
-    (function Execution_finished -> print_newline () | _ -> ());
+    (function Exec.Execution_finished -> print_newline () | _ -> ());
     Handlers.failure_report 
       (fun results ->
         let indexed items = 
-          let indices = Array.init (List.length items) (fun i -> i) |> Array.to_list in
+          let indices = Array.to_list (Array.init (List.length items) (fun i -> i)) in
           List.combine indices items 
         in
         let report (index, result) = 
@@ -131,10 +86,10 @@ let console =
           | Fail (desc, ex) ->
               Printf.printf "  %d) %s\n\n" (index+1) desc
         in
-        let failed = results |> List.filter (function Fail _ -> true | Pass _ -> false) in
+        let failed = List.filter (function Fail _ -> true | Pass _ -> false) results in
         if List.length failed > 0 then
           Printf.printf "\nFailures:\n\n";
-          failed |> indexed |> List.iter report
+          List.iter report (indexed failed)
       );
     Handlers.total_time (Printf.printf "Finished in %f seconds\n");
     Handlers.summary
