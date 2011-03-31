@@ -6,6 +6,9 @@ test: unit_tests.byte
 unit_tests.byte: ospecl.cma test_matcher.cmo test_matchers.cmo test_spec.cmo test_run.cmo
 	$(OCAMLC) -o unit_tests.byte unix.cma ospecl.cma test_matcher.cmo test_matchers.cmo test_spec.cmo test_run.cmo
 
+examples: ospecl.cma examples/account.cmo examples/account_spec.ml
+	ocaml -I examples examples/account_spec.ml
+
 ospecl.cma: matcher.cmo matchers.cmo spec.cmo run.cmo
 	$(OCAMLC) -pack -o ospecl.cma matcher.cmo matchers.cmo spec.cmo run.cmo
 
@@ -32,7 +35,7 @@ Makefile.source_dependencies: *.ml *.mli
 include Makefile.source_dependencies
 
 # these targets are not files
-.PHONY: all clean test
+.PHONY: all clean test examples
 
 # definitions
 OCAMLC = ocamlc -g -warn-error A
