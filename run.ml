@@ -84,7 +84,7 @@ let console =
           match result with
           | Pass _ -> ()
           | Fail (desc, ex) ->
-              Printf.printf "  %d) %s\n\n" (index+1) desc
+              Printf.printf "  %d) %s\n        %s\n\n" (index+1) desc (Printexc.to_string ex)
         in
         let failed = List.filter (function Fail _ -> true | Pass _ -> false) results in
         if List.length failed > 0 then
