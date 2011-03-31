@@ -18,7 +18,7 @@ For example:
       ]
     ]
 
-A [working example](https://github.com/rapha/Ospecl/examples/account_spec.ml) can be found in the examples directory.
+A [working example](https://github.com/rapha/Ospecl/blob/master/examples/account_spec.ml) can be found in the examples directory.
 
 Ospecl comes with a basic set of matchers in `Ospecl.Matchers`, but you can define your own on top of `Ospecl.Matcher` that better describe your domain.
 
