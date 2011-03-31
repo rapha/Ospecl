@@ -15,7 +15,7 @@ let withdraw amount account =
   match amount with
   | neg when amount < 0 ->
       invalid_arg (Printf.sprintf "Cannot withdraw a negative amount: %d" amount)
-  | pos when amount < account ->
-      account - amount
-  | pos ->
+  | pos when amount > account ->
       invalid_arg (Printf.sprintf "Insufficient funds: %d" account)
+  | pos ->
+      account - amount
