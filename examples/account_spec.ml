@@ -1,9 +1,5 @@
 #load "account.cmo";;
 
-#use "topfind";;
-#require "unix";;
-#require "ospecl";;
-
 open Ospecl.Spec
 open Ospecl.Matchers
 

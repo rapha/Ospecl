@@ -7,7 +7,7 @@ unit_tests.byte: ospecl.cma test_matcher.cmo test_matchers.cmo test_spec.cmo tes
 	$(OCAMLC) -o unit_tests.byte unix.cma ospecl.cma test_matcher.cmo test_matchers.cmo test_spec.cmo test_run.cmo
 
 examples: ospecl.cma examples/account.cmo examples/account_spec.ml
-	ocaml -I examples examples/account_spec.ml
+	ocaml unix.cma ospecl.cma -I examples/ examples/account_spec.ml
 
 ospecl.cma: matcher.cmo matchers.cmo spec.cmo run.cmo
 	$(OCAMLC) -pack -o ospecl.cma matcher.cmo matchers.cmo spec.cmo run.cmo
