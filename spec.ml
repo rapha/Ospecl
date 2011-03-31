@@ -17,8 +17,7 @@ let expect value matcher =
   | Matcher.Matched _ ->
       ()
   | Matcher.Mismatched desc ->
-      let message = Printf.sprintf "Expected %s but got %s"
-      (Matcher.description_of matcher) desc in
+      let message = Printf.sprintf "Expected %s but got %s" (Matcher.description_of matcher) desc in
       raise (Expectation_failed message)
 
 let (=~) = expect
