@@ -1,5 +1,7 @@
 type t = int
 
+exception Insufficient_funds of int
+
 let create () = 0
 
 let balance account = account
@@ -16,6 +18,6 @@ let withdraw amount account =
   | neg when amount < 0 ->
       invalid_arg (Printf.sprintf "Cannot withdraw a negative amount: %d" amount)
   | pos when amount > account ->
-      invalid_arg (Printf.sprintf "Insufficient funds: %d" account)
+      raise (Insufficient_funds account)
   | pos ->
       account - amount

@@ -54,7 +54,7 @@ let main =
               it "fails" (fun _ ->
                 expect 
                   (fun _ -> Account.withdraw 50 empty)
-                  (raise_exn (Invalid_argument "Insufficient funds: 0"))
+                  (raise_exn (Account.Insufficient_funds 0))
               );
             ];
           ];
