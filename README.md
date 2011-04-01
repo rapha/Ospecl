@@ -5,16 +5,16 @@ A spec is a data structure built up using calls to `describe` to provide context
 For example:
 
     describe "some component" [
-      it "has some behaviour" (fun _ ->
+      it "has some behaviour" begin
         expect my_component (has some_behaviour)
-      );
+      end;
       describe "in some particular context" [
-        it "has some different behaviour" (fun _ ->
+        it "has some different behaviour" begin
           expect my_component (has different_behaviour)
-        );
-        it "does something else too" (fun _ ->
+        end;
+        it "does something else too" begin
           my_component =~ (does something_else)
-        )
+        end
       ]
     ]
 
