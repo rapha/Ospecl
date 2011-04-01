@@ -8,14 +8,17 @@ For example:
       it "has some behaviour" begin
         expect my_component (has some_behaviour)
       end;
-      describe "in some particular context" [
-        it "has some different behaviour" begin
-          expect my_component (has different_behaviour)
-        end;
-        it "does something else too" begin
-          my_component =~ (does something_else)
-        end
-      ]
+      describe "in some particular context" begin
+        let different = in_context my_component in
+        [
+          it "has some different behaviour" begin
+            expect different (has different_behaviour)
+          end;
+          it "does something else too" begin
+            different =~ (does something_else)
+          end
+        ]
+      end
     ]
 
 A [working example](https://github.com/rapha/Ospecl/blob/master/examples/account_spec.ml) can be found in the examples directory, and another one [here](https://gist.github.com/896752#file_spec.ml).
