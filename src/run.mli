@@ -3,7 +3,7 @@ module Handlers : sig
   (* passes the total duration (in seconds) to the given function once execution has finished *)
   val total_time : (float -> unit) -> Spec.Exec.handler
   (* passes the count of passes and failures to the given function at the end *)
-  val summary : ((int * int) -> unit) -> Spec.Exec.handler
+  val summary : ((int * int * int) -> unit) -> Spec.Exec.handler
   (* passes the appropriate exit code (1 for any failures, 0 for all passes) to the given function at the end *)
   val exit_code: (int -> unit) -> Spec.Exec.handler
   (* passes each result to the given function as they occur *)

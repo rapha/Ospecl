@@ -1,17 +1,18 @@
 (* an executable description of a component's desired behavour *)
 type t
+type expectation
 
 (* information about how the component conforms to the spec *)
-type result =  Pass of string | Fail of string * exn
+type result =  Pass of string | Fail of string * exn | Skip of string * string
 
 (* build a single spec from a description and test function *)
-val it : string -> (unit -> unit) -> t
+val it : string -> expectation -> t
 (* logically group specs *)
 val describe : string -> t list -> t
 
 (* make expectations about values *)
-val expect : 'a -> 'a Matcher.t -> unit
-val (=~) : 'a -> 'a Matcher.t -> unit
+val expect : 'a -> 'a Matcher.t -> expectation
+val (=~) : 'a -> 'a Matcher.t -> expectation
 
 (* get the results of executing a spec *)
 val eval : t -> result list

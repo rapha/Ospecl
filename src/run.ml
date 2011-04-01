@@ -22,14 +22,16 @@ module Handlers = struct
   let summary callback =
     let passes = ref 0 in
     let failures = ref 0 in
+    let skips = ref 0 in
     function
     | Example_finished result -> begin
         match result with
         | Pass _ -> incr passes
         | Fail _ -> incr failures
+        | Skip _ -> incr skips
       end
     | Execution_finished ->
-        callback (!passes, !failures)
+        callback (!passes, !failures, !skips)
     | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
         ()
 
@@ -40,6 +42,7 @@ module Handlers = struct
         match result with
         | Pass _ -> ()
         | Fail _ -> failures := result :: !failures
+        | Skip _ -> ()
       end
     | Execution_finished ->
         callback (List.rev !failures)
@@ -53,6 +56,7 @@ module Handlers = struct
         match result with
         | Pass _ -> ()
         | Fail _ -> code := 1
+        | Skip _ -> ()
       end
     | Execution_finished ->
         callback !code
@@ -72,6 +76,7 @@ let console =
     Handlers.each_result (function
       | Pass _ -> print_char '.'
       | Fail _ -> print_char 'F'
+      | Skip _ -> print_char '*'
     );
     (function Exec.Execution_finished -> print_newline () | _ -> ());
     Handlers.failure_report 
@@ -85,15 +90,16 @@ let console =
           | Pass _ -> ()
           | Fail (desc, ex) ->
               Printf.printf "  %d) %s\n        %s\n\n" (index+1) desc (Printexc.to_string ex)
+          | Skip _ -> ()
         in
-        let failed = List.filter (function Fail _ -> true | Pass _ -> false) results in
+        let failed = List.filter (function Fail _ -> true | _ -> false) results in
         if List.length failed > 0 then
           Printf.printf "\nFailures:\n\n";
           List.iter report (indexed failed)
       );
     Handlers.total_time (Printf.printf "Finished in %f seconds\n");
     Handlers.summary
-      (fun (passes, failures) ->
+      (fun (passes, failures, pending) ->
         let examples = passes + failures in
         let pluralise noun = function
           | 1 -> noun

@@ -14,8 +14,8 @@ let test_eval =
         let bulb = make_bulb true in
         describe "when toggled" begin
           let bulb = toggle bulb in [
-            it "is off" (fun _ -> expect (is_off bulb) (is true'));
-            it "is not on" (fun _ -> is_on bulb =~ is (not' true'));
+            it "is off" (is_off bulb =~ is true');
+            it "is not on" (is_on bulb =~ is (not' true'));
           ]
         end
       ]
@@ -32,12 +32,12 @@ let test_exec =
   let specs = [
     describe "1" [
       describe "+" [
-        it "1 = 2" (fun _ -> 1 + 1 =~ is (equal_to_int 2));
-        it "2 = 3" (fun _ -> 1 + 2 =~ is (equal_to_int 3));
+        it "1 = 2" (1 + 1 =~ is (equal_to_int 2));
+        it "2 = 3" (1 + 2 =~ is (equal_to_int 3));
       ];
       describe "-" [
-        it "1 = 0" (fun _ -> 1 - 1 =~ is (equal_to_int 0));
-        it "2 = -1" (fun _ -> 1 - 2 =~ is (equal_to_int (-1)));
+        it "1 = 0" (1 - 1 =~ is (equal_to_int 0));
+        it "2 = -1" (1 - 2 =~ is (equal_to_int (-1)));
       ];
     ]
   ]

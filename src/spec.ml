@@ -1,29 +1,34 @@
 (* constructing specs *)
-type t = Example of string * (unit -> unit) | Group of string * t list
+type expectation = Expectation of (unit -> unit) | Pending of string
 
-let it description example = Example (description, example)
+type t = Example of string * expectation | Group of string * t list
+
+let it description expectation = Example (description, expectation)
 let describe name specs = Group (name, specs)
 
 let contextualize context spec = match spec with
-  | Example (description, example) -> Example (context ^ " " ^ description, example)
+  | Example (description, expecation) -> Example (context ^ " " ^ description, expecation)
   | Group (description, specs) -> Group (context ^ " " ^ description, specs)
-
 
 (* expressing expectations *)
 exception Expectation_failed of string
 
 let expect value matcher =
-  match Matcher.check value matcher with
-  | Matcher.Matched _ ->
-      ()
-  | Matcher.Mismatched desc ->
-      let message = Printf.sprintf "Expected %s but got %s" (Matcher.description_of matcher) desc in
-      raise (Expectation_failed message)
+  Expectation begin fun _ ->
+    match Matcher.check value matcher with
+    | Matcher.Matched _ ->
+        ()
+    | Matcher.Mismatched desc ->
+        let message = Printf.sprintf "Expected %s but got %s" (Matcher.description_of matcher) desc in
+        raise (Expectation_failed message)
+  end
+
+let pending blocker = Pending blocker
 
 let (=~) = expect
 
 (* executing the specs *)
-type result = Pass of string | Fail of string * exn
+type result = Pass of string | Fail of string * exn | Skip of string * string
 
 module Exec = struct
   type event =
@@ -41,17 +46,21 @@ module Exec = struct
       List.iter (function handle -> handle event) handlers
     in
     let rec exec_spec = function
-      | Example (description, example) -> begin
+      | Example (description, expectation) -> begin
           fire (Example_started description);
           let result =
-            try
-              begin
-                example ();
-                Pass description
-              end
-            with
-            | ex ->
-                Fail (description, ex)
+            match expectation with
+            | Expectation example ->
+                begin 
+                  try
+                    example ();
+                    Pass description
+                  with
+                  | ex ->
+                      Fail (description, ex)
+                end
+            | Pending blocker ->
+                Skip (description, blocker)
           in
           fire (Example_finished result)
         end
@@ -64,6 +73,7 @@ module Exec = struct
     fire Execution_started;
     List.iter exec_spec specs;
     fire Execution_finished
+
 end
 
 let eval specs =
