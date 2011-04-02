@@ -28,7 +28,7 @@ let pending blocker = Pending blocker
 let (=~) = expect
 
 (* executing the specs *)
-type result = Pass of string | Fail of string * exn | Skip of string * string
+type result = Passed of string | Failed of string * exn | Skipped of string * string
 
 module Exec = struct
   type event =
@@ -54,13 +54,13 @@ module Exec = struct
                 begin 
                   try
                     example ();
-                    Pass description
+                    Passed description
                   with
                   | ex ->
-                      Fail (description, ex)
+                      Failed (description, ex)
                 end
             | Pending blocker ->
-                Skip (description, blocker)
+                Skipped (description, blocker)
           in
           fire (Example_finished result)
         end

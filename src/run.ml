@@ -26,9 +26,9 @@ module Handlers = struct
     function
     | Example_finished result -> begin
         match result with
-        | Pass _ -> incr passes
-        | Fail _ -> incr failures
-        | Skip _ -> incr skips
+        | Passed _ -> incr passes
+        | Failed _ -> incr failures
+        | Skipped _ -> incr skips
       end
     | Execution_finished ->
         callback (!passes, !failures, !skips)
@@ -40,9 +40,9 @@ module Handlers = struct
     function
     | Example_finished result -> begin
         match result with
-        | Pass _ -> ()
-        | Fail _ -> failures := result :: !failures
-        | Skip _ -> ()
+        | Passed _ -> ()
+        | Failed _ -> failures := result :: !failures
+        | Skipped _ -> ()
       end
     | Execution_finished ->
         callback (List.rev !failures)
@@ -54,9 +54,9 @@ module Handlers = struct
     function
     | Example_finished result -> begin
         match result with
-        | Pass _ -> ()
-        | Fail _ -> code := 1
-        | Skip _ -> ()
+        | Passed _ -> ()
+        | Failed _ -> code := 1
+        | Skipped _ -> ()
       end
     | Execution_finished ->
         callback !code
@@ -74,9 +74,9 @@ end
 let console = 
   Exec.execute [
     Handlers.each_result (function
-      | Pass _ -> print_char '.'
-      | Fail _ -> print_char 'F'
-      | Skip _ -> print_char '*'
+      | Passed _ -> print_char '.'
+      | Failed _ -> print_char 'F'
+      | Skipped _ -> print_char '*'
     );
     (function Exec.Execution_finished -> print_newline () | _ -> ());
     Handlers.failure_report 
@@ -87,12 +87,12 @@ let console =
         in
         let report (index, result) = 
           match result with
-          | Pass _ -> ()
-          | Fail (desc, ex) ->
+          | Passed _ -> ()
+          | Failed (desc, ex) ->
               Printf.printf "  %d) %s\n        %s\n\n" (index+1) desc (Printexc.to_string ex)
-          | Skip _ -> ()
+          | Skipped _ -> ()
         in
-        let failed = List.filter (function Fail _ -> true | _ -> false) results in
+        let failed = List.filter (function Failed _ -> true | _ -> false) results in
         if List.length failed > 0 then
           Printf.printf "\nFailures:\n\n";
           List.iter report (indexed failed)

@@ -3,7 +3,7 @@ type t
 type expectation
 
 (* information about how the component conforms to the spec *)
-type result =  Pass of string | Fail of string * exn | Skip of string * string
+type result =  Passed of string | Failed of string * exn | Skipped of string * string
 
 (* build a single spec from a description and test function *)
 val it : string -> expectation -> t

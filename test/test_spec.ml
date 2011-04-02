@@ -22,8 +22,8 @@ let test_eval =
     ]
   in
   let expected_results = [
-    Pass "a light bulb that is on when toggled is off";
-    Pass "a light bulb that is on when toggled is not on";
+    Passed "a light bulb that is on when toggled is off";
+    Passed "a light bulb that is on when toggled is not on";
   ]
   in
   assert (eval spec = expected_results)
@@ -49,15 +49,15 @@ let test_exec =
       Group_started "1";
         Group_started "1 +";
           Example_started "1 + 1 = 2";
-          Example_finished (Pass "1 + 1 = 2");
+          Example_finished (Passed "1 + 1 = 2");
           Example_started "1 + 2 = 3";
-          Example_finished (Pass "1 + 2 = 3");
+          Example_finished (Passed "1 + 2 = 3");
         Group_finished "1 +";
         Group_started "1 -";
           Example_started "1 - 1 = 0";
-          Example_finished (Pass "1 - 1 = 0");
+          Example_finished (Passed "1 - 1 = 0");
           Example_started "1 - 2 = -1";
-          Example_finished (Pass "1 - 2 = -1");
+          Example_finished (Passed "1 - 2 = -1");
         Group_finished "1 -";
       Group_finished "1";
       Execution_finished;
