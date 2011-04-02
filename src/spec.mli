@@ -13,6 +13,7 @@ val describe : string -> t list -> t
 (* make expectations about values *)
 val expect : 'a -> 'a Matcher.t -> expectation
 val (=~) : 'a -> 'a Matcher.t -> expectation
+val pending : string -> expectation
 
 (* get the results of executing a spec *)
 val eval : t -> result list

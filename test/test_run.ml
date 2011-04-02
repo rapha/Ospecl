@@ -26,10 +26,14 @@ let test_summary =
     Example_finished fail;
     Execution_finished
   ];
-  assert_emits [(2, 1, 0)] Handlers.summary [
-    Example_finished pass;
+  assert_emits [(0, 0, 1)] Handlers.summary [
+    Example_finished skip;
+    Execution_finished
+  ];
+  assert_emits [(1, 1, 1)] Handlers.summary [
     Example_finished pass;
     Example_finished fail;
+    Example_finished skip;
     Execution_finished
   ]
 
@@ -41,14 +45,11 @@ let test_exit_code =
     Example_finished pass;
     Execution_finished
   ];
-  assert_emits [1] Handlers.exit_code [
-    Example_finished fail;
+  assert_emits [0] Handlers.exit_code [
+    Example_finished skip;
     Execution_finished
   ];
   assert_emits [1] Handlers.exit_code [
-    Example_finished pass;
-    Example_finished pass;
-    Example_finished fail;
     Example_finished fail;
     Execution_finished
   ]
@@ -65,10 +66,11 @@ let test_total_time =
   | Some duration -> assert (duration >= 0.)
 
 let test_each_result =
-  assert_emits [pass; fail]
+  assert_emits [pass; fail; skip]
     Handlers.each_result [
       Example_finished pass;
       Example_finished fail;
+      Example_finished skip;
     ]
 
 let test_eval =
@@ -88,12 +90,14 @@ let test_eval =
             it "is not on" (is_on bulb =~ is (not' true'));
           ]
         end
-      ]
+      ];
+      it "is energy efficient" (pending "Need better definition of efficient.")
     ]
   in
   let expected_results = [
     Passed "a light bulb that is on when toggled is off";
     Passed "a light bulb that is on when toggled is not on";
+    Skipped ("a light bulb is energy efficient", "Need better definition of efficient.");
   ]
   in
   assert (eval spec = expected_results)
