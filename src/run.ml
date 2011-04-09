@@ -73,43 +73,49 @@ module Handlers = struct
 
 end
 
-let console = 
-  Exec.execute [
-    Handlers.each_result (function
-      | Passed _ -> print_char '.'
-      | Failed _ -> print_char 'F'
-      | Skipped _ -> print_char '*'
-    );
-    (function Exec.Execution_finished -> print_newline () | _ -> ());
-    Handlers.failure_report 
-      (fun results ->
-        let indexed items = 
-          let indices = Array.to_list (Array.init (List.length items) (fun i -> i)) in
-          List.combine indices items 
-        in
-        let report (index, result) = 
-          match result with
-          | Passed _ -> ()
-          | Failed (desc, ex) ->
-              printf "  %d) %s\n        %s\n\n" (index+1) desc (Printexc.to_string ex)
-          | Skipped _ -> ()
-        in
-        let failed = List.filter (function Failed _ -> true | _ -> false) results in
-        if List.length failed > 0 then
-          printf "\nFailures:\n\n";
-          List.iter report (indexed failed)
-      );
-    Handlers.total_time (printf "Finished in %f seconds\n");
-    Handlers.summary
-      (fun (passes, failures, pending) ->
-        let examples = passes + failures in
-        let pluralise noun = function
-          | 1 -> noun
-          | _ -> (noun ^ "s")
-        in
-        printf "%d %s, %d %s\n" examples (pluralise "example" examples) failures (pluralise "failure" failures)
-      );
+let summary_handler (passes, failures, pending) =
+  let examples = passes + failures in
+  let pluralise noun = function
+    | 1 -> noun
+    | _ -> (noun ^ "s")
+  in
+  printf "%d %s, %d %s\n" examples (pluralise "example" examples) failures (pluralise "failure" failures)
 
+let total_time_handler duration = printf "Finished in %f seconds\n" duration
+
+let failure_report_handler results =
+  let indexed items = 
+    let indices = Array.to_list (Array.init (List.length items) (fun i -> i)) in
+    List.combine indices items 
+  in
+  let report (index, result) = 
+    match result with
+    | Passed _ -> ()
+    | Failed (desc, ex) ->
+        printf "  %d) %s\n        %s\n\n" (index+1) desc (Printexc.to_string ex)
+    | Skipped _ -> ()
+  in
+  let failed = List.filter (function Failed _ -> true | _ -> false) results in
+  if List.length failed > 0 then
+    printf "\nFailures:\n\n";
+    List.iter report (indexed failed)
+
+let finish_with_nl_handler = function 
+  | Exec.Execution_finished -> print_newline () 
+  | _ -> ()
+
+let console = 
+  let progress_handler = function
+    | Passed _ -> print_char '.'
+    | Failed _ -> print_char 'F'
+    | Skipped _ -> print_char '*'
+  in
+  Exec.execute [
+    Handlers.each_result progress_handler;
+    finish_with_nl_handler;
+    Handlers.failure_report failure_report_handler;
+    Handlers.total_time total_time_handler;
+    Handlers.summary summary_handler;
     Handlers.exit_code exit
   ]
 
@@ -119,7 +125,7 @@ let doc =
   let indent () = 
     String.make (!depth*2) ' '
   in
-  let handler = function
+  let doc_handler = function
     | Group_started path -> begin
         let name = List.hd (List.rev path) in
         printf "%s%s\n" (indent ()) name;
@@ -129,7 +135,7 @@ let doc =
         decr depth
     | Example_started path ->
         let description = List.hd (List.rev path) in
-        printf "%s%s ... " (indent ()) description
+        printf "%s%s " (indent ()) description
     | Example_finished result -> begin
         let result = 
           match result with
@@ -142,4 +148,11 @@ let doc =
     | Execution_started | Execution_finished ->
         ()
   in
-  Exec.execute [handler]
+  Exec.execute [
+    doc_handler; 
+    finish_with_nl_handler;
+    Handlers.failure_report failure_report_handler;
+    Handlers.total_time total_time_handler;
+    Handlers.summary summary_handler;
+    Handlers.exit_code exit
+  ]
