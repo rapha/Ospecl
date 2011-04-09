@@ -116,26 +116,20 @@ let console =
 let doc = 
   let open Spec.Exec in
   let depth = ref 0 in
-  let prefices = ref [0] in
   let indent () = 
     String.make (!depth*2) ' '
   in
   let handler = function
-    | Execution_started ->
-        prefices := (0 :: !prefices)
-    | Group_started desc -> begin
-        let prefix = List.hd !prefices in
-        printf "%s%s\n" (indent ()) (String.sub desc prefix (String.length desc - prefix));
-        incr depth;
-        prefices := (String.length desc :: !prefices)
+    | Group_started path -> begin
+        let name = List.hd (List.rev path) in
+        printf "%s%s\n" (indent ()) name;
+        incr depth
       end
-    | Group_finished desc -> begin
-        decr depth;
-        prefices := List.tl !prefices
-      end
-    | Example_started desc -> 
-        let prefix = List.hd !prefices in
-        printf "%s%s ... " (indent ()) (String.sub desc prefix (String.length desc - prefix))
+    | Group_finished _ -> 
+        decr depth
+    | Example_started path ->
+        let description = List.hd (List.rev path) in
+        printf "%s%s ... " (indent ()) description
     | Example_finished result -> begin
         let result = 
           match result with
@@ -145,7 +139,7 @@ let doc =
         in
         printf "%s\n" result
       end
-    | Execution_finished ->
+    | Execution_started | Execution_finished ->
         ()
   in
   Exec.execute [handler]

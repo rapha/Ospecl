@@ -19,13 +19,16 @@ val pending : string -> expectation
 val eval : t -> result list
 
 module Exec : sig
+  (* the descriptions which trace the path to a given spec *)
+  type path = string list
+
   (* events that occur during the execution of a spec *)
   type event =
     | Execution_started           (* always fired first *)
     | Execution_finished          (* always fired last *)
-    | Group_started of string
-    | Group_finished of string    (* always fired after corresponding Group_started *)
-    | Example_started of string
+    | Group_started of path
+    | Group_finished of path      (* always fired after corresponding Group_started *)
+    | Example_started of path
     | Example_finished of result  (* always fired after corresponding Example_started *)
 
   (* handlers are executed to respond to execution events *)

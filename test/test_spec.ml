@@ -33,11 +33,6 @@ let test_exec =
     describe "1" [
       describe "+" [
         it "1 = 2" (1 + 1 =~ is (equal_to_int 2));
-        it "2 = 3" (1 + 2 =~ is (equal_to_int 3));
-      ];
-      describe "-" [
-        it "1 = 0" (1 - 1 =~ is (equal_to_int 0));
-        it "2 = -1" (1 - 2 =~ is (equal_to_int (-1)));
       ];
     ]
   ]
@@ -46,20 +41,12 @@ let test_exec =
     let open Exec in 
     [
       Execution_started;
-      Group_started "1";
-        Group_started "1 +";
-          Example_started "1 + 1 = 2";
+      Group_started ["1"];
+        Group_started ["1"; "+"];
+          Example_started ["1";"+";"1 = 2"];
           Example_finished (Passed "1 + 1 = 2");
-          Example_started "1 + 2 = 3";
-          Example_finished (Passed "1 + 2 = 3");
-        Group_finished "1 +";
-        Group_started "1 -";
-          Example_started "1 - 1 = 0";
-          Example_finished (Passed "1 - 1 = 0");
-          Example_started "1 - 2 = -1";
-          Example_finished (Passed "1 - 2 = -1");
-        Group_finished "1 -";
-      Group_finished "1";
+        Group_finished ["1";"+"];
+      Group_finished ["1"];
       Execution_finished;
     ]
   in

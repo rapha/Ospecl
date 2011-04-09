@@ -118,20 +118,20 @@ let test_exec =
   in
   let expected_events = [
     Execution_started;
-    Group_started "1";
-      Group_started "1 +";
-        Example_started "1 + 1 = 2";
+    Group_started ["1"];
+      Group_started ["1";"+"];
+        Example_started ["1";"+";"1 = 2"];
         Example_finished (Passed "1 + 1 = 2");
-        Example_started "1 + 2 = 3";
+        Example_started ["1";"+";"2 = 3"];
         Example_finished (Passed "1 + 2 = 3");
-      Group_finished "1 +";
-      Group_started "1 -";
-        Example_started "1 - 1 = 0";
+      Group_finished ["1";"+"];
+      Group_started ["1";"-"];
+        Example_started ["1";"-";"1 = 0"];
         Example_finished (Passed "1 - 1 = 0");
-        Example_started "1 - 2 = -1";
+        Example_started ["1";"-";"2 = -1"];
         Example_finished (Passed "1 - 2 = -1");
-      Group_finished "1 -";
-    Group_finished "1";
+      Group_finished ["1";"-"];
+    Group_finished ["1"];
     Execution_finished;
   ]
   in

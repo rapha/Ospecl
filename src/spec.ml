@@ -35,12 +35,14 @@ let (=~) = expect
 type result = Passed of string | Failed of string * exn | Skipped of string * string
 
 module Exec = struct
+  type path = string list
+
   type event =
     | Execution_started
     | Execution_finished
-    | Group_started of string
-    | Group_finished of string
-    | Example_started of string
+    | Group_started of path
+    | Group_finished of path
+    | Example_started of path
     | Example_finished of result
 
   type handler = (event -> unit)
@@ -52,7 +54,7 @@ module Exec = struct
     let rec exec_spec = function
       | Example (path, expectation) -> begin
           let description = join path in
-          fire (Example_started description);
+          fire (Example_started path);
           let result =
             match expectation with
             | Expectation example ->
@@ -70,11 +72,10 @@ module Exec = struct
           fire (Example_finished result)
         end
       | Group (path, specs) ->
-          let description = join path in
-          fire (Group_started description);
+          fire (Group_started path);
           let contextualized = List.map (contextualize path) specs in
           List.iter exec_spec contextualized;
-          fire (Group_finished description)
+          fire (Group_finished path)
     in
     fire Execution_started;
     List.iter exec_spec specs;
