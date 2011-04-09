@@ -12,3 +12,5 @@ end
 
 (* default set of handlers for running from the console *)
 val console : Spec.t list -> unit
+
+val doc: Spec.t list -> unit

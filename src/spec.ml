@@ -1,14 +1,18 @@
 (* constructing specs *)
 type expectation = Expectation of (unit -> unit) | Pending of string
 
-type t = Example of string * expectation | Group of string * t list
+type t = Example of string list * expectation | Group of string list * t list
 
-let it description expectation = Example (description, expectation)
-let describe name specs = Group (name, specs)
+let it description expectation = Example ([description], expectation)
+let describe name specs = Group ([name], specs)
 
-let contextualize context spec = match spec with
-  | Example (description, expecation) -> Example (context ^ " " ^ description, expecation)
-  | Group (description, specs) -> Group (context ^ " " ^ description, specs)
+let join path = match path with
+  | [] -> ""
+  | first::rest -> List.fold_left (fun result element -> result ^ " " ^ element) first rest
+
+let contextualize context = function
+  | Example (path, expectation) -> Example (context @ path, expectation)
+  | Group (path, specs) -> Group (context @ path, specs)
 
 (* expressing expectations *)
 exception Expectation_failed of string
@@ -46,7 +50,8 @@ module Exec = struct
       List.iter (function handle -> handle event) handlers
     in
     let rec exec_spec = function
-      | Example (description, expectation) -> begin
+      | Example (path, expectation) -> begin
+          let description = join path in
           fire (Example_started description);
           let result =
             match expectation with
@@ -64,9 +69,10 @@ module Exec = struct
           in
           fire (Example_finished result)
         end
-      | Group (description, specs) ->
+      | Group (path, specs) ->
+          let description = join path in
           fire (Group_started description);
-          let contextualized = List.map (contextualize description) specs in
+          let contextualized = List.map (contextualize path) specs in
           List.iter exec_spec contextualized;
           fire (Group_finished description)
     in

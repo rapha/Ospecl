@@ -1,5 +1,7 @@
 open Spec
 
+open Printf
+
 module Handlers = struct
   open Spec.Exec
 
@@ -89,15 +91,15 @@ let console =
           match result with
           | Passed _ -> ()
           | Failed (desc, ex) ->
-              Printf.printf "  %d) %s\n        %s\n\n" (index+1) desc (Printexc.to_string ex)
+              printf "  %d) %s\n        %s\n\n" (index+1) desc (Printexc.to_string ex)
           | Skipped _ -> ()
         in
         let failed = List.filter (function Failed _ -> true | _ -> false) results in
         if List.length failed > 0 then
-          Printf.printf "\nFailures:\n\n";
+          printf "\nFailures:\n\n";
           List.iter report (indexed failed)
       );
-    Handlers.total_time (Printf.printf "Finished in %f seconds\n");
+    Handlers.total_time (printf "Finished in %f seconds\n");
     Handlers.summary
       (fun (passes, failures, pending) ->
         let examples = passes + failures in
@@ -105,8 +107,45 @@ let console =
           | 1 -> noun
           | _ -> (noun ^ "s")
         in
-        Printf.printf "%d %s, %d %s\n" examples (pluralise "example" examples) failures (pluralise "failure" failures)
+        printf "%d %s, %d %s\n" examples (pluralise "example" examples) failures (pluralise "failure" failures)
       );
 
     Handlers.exit_code exit
   ]
+
+let doc = 
+  let open Spec.Exec in
+  let depth = ref 0 in
+  let prefices = ref [0] in
+  let indent () = 
+    String.make (!depth*2) ' '
+  in
+  let handler = function
+    | Execution_started ->
+        prefices := (0 :: !prefices)
+    | Group_started desc -> begin
+        let prefix = List.hd !prefices in
+        printf "%s%s\n" (indent ()) (String.sub desc prefix (String.length desc - prefix));
+        incr depth;
+        prefices := (String.length desc :: !prefices)
+      end
+    | Group_finished desc -> begin
+        decr depth;
+        prefices := List.tl !prefices
+      end
+    | Example_started desc -> 
+        let prefix = List.hd !prefices in
+        printf "%s%s ... " (indent ()) (String.sub desc prefix (String.length desc - prefix))
+    | Example_finished result -> begin
+        let result = 
+          match result with
+          | Passed _ -> "(PASSED)"
+          | Failed _ -> "(FAILED)"
+          | Skipped _ -> "(SKIPPED)"
+        in
+        printf "%s\n" result
+      end
+    | Execution_finished ->
+        ()
+  in
+  Exec.execute [handler]
