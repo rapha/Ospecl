@@ -25,4 +25,10 @@ A [working example](https://github.com/rapha/Ospecl/blob/master/examples/account
 
 Ospecl comes with a core set of matchers in `Ospecl.Matchers`, but you can define your own on top of `Ospecl.Matcher` that better describe your domain.
 
-Ospecl also comes with a simple runner function (`Ospecl.Run.console`) designed to be executed in a script run from the command line, but again you can build custom runners by using `Ospecl.Spec.Exec.execute` with your own set of handlers for the execution events.
+Specs may be executed using the command line runner:
+
+    $ ./ospecl my_spec1.ml my_spec2.ml my_spec3.ml 
+    
+`ospecl` accepts a list of source files, each of which must define a single value, `specs`, with type `Spec.t list`. The specs from each of these files will be executed in order and the results reported together.
+
+Ospecl also comes with runner functions `Ospecl.Run.console` and `Ospecl.Run.doc` which can be executed in your own script run from the command line. Additionally you can build altogether new runners by calling `Ospecl.Spec.Exec.execute` with your own set of handlers for the execution events.

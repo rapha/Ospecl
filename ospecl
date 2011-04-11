@@ -1,0 +1,30 @@
+#!/usr/bin/env ocaml
+
+(**
+ * Usage: $ ospecl module1_spec.ml module2_spec.ml ...
+ * The arguments to ospecl should be source files which define a single value `specs : Spec.t list`.
+ * The specs from each file will be executed in order and the overall results reported.
+ *)
+
+#use "topfind"
+#require "unix"
+#require "ospecl"
+
+let _ =
+  let (|>) x f = f x in
+  let specs_of_file filename =
+    let dir = Filename.dirname filename in
+    Topdirs.dir_directory dir;
+    let used = Toploop.use_file Format.std_formatter filename in
+    if used then
+      Obj.obj (Toploop.getvalue "specs")
+    else
+      failwith ("Could not use file " ^ filename)
+  in
+  let all_specs = 
+    Array.sub Sys.argv 1 (Array.length Sys.argv - 1)
+    |> Array.to_list 
+    |> List.map specs_of_file 
+    |> List.concat
+  in
+  Ospecl.Run.console all_specs
