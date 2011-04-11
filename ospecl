@@ -10,21 +10,24 @@
 #require "unix"
 #require "ospecl"
 
+let specs_of_file filename =
+  let dir = Filename.dirname filename in
+  Topdirs.dir_directory dir;
+  let used = Toploop.use_file Format.std_formatter filename in
+  if used then
+    Obj.obj (Toploop.getvalue "specs")
+  else
+    failwith ("Could not use file " ^ filename)
+
 let _ =
-  let (|>) x f = f x in
-  let specs_of_file filename =
-    let dir = Filename.dirname filename in
-    Topdirs.dir_directory dir;
-    let used = Toploop.use_file Format.std_formatter filename in
-    if used then
-      Obj.obj (Toploop.getvalue "specs")
-    else
-      failwith ("Could not use file " ^ filename)
-  in
-  let all_specs = 
-    Array.sub Sys.argv 1 (Array.length Sys.argv - 1)
-    |> Array.to_list 
-    |> List.map specs_of_file 
-    |> List.concat
-  in
+  let files = ref [] in
+  let include_dirs = ref [] in
+
+  Arg.parse 
+    [("-I", Arg.String (fun dir -> include_dirs := !include_dirs @ [dir]), "set include directory")] 
+    (fun file -> files := !files @ [file])
+    (Printf.sprintf "$ %s %s %s ...\n" Sys.argv.(0) "spec1.ml" "spec2.ml");
+
+  List.iter Topdirs.dir_directory !include_dirs;
+  let all_specs = List.concat (List.map specs_of_file !files) in
   Ospecl.Run.console all_specs
