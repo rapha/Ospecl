@@ -27,7 +27,7 @@ Ospecl comes with a core set of matchers in `Ospecl.Matchers`, but you can defin
 
 Specs may be executed using the command line runner:
 
-    $ ./ospecl my_spec1.ml my_spec2.ml my_spec3.ml 
+    $ ospecl my_spec1.ml my_spec2.ml my_spec3.ml 
     
 `ospecl` accepts a list of source files, each of which must define a single value, `specs`, with type `Spec.t list`. The specs from each of these files will be executed in order and the results reported together.
 
