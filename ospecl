@@ -23,10 +23,14 @@ let _ =
   let files = ref [] in
   let include_dirs = ref [] in
 
+  let append_to list_ref value =
+    list_ref := !list_ref @ [value]
+  in
+
   Arg.parse 
-    [("-I", Arg.String (fun dir -> include_dirs := !include_dirs @ [dir]), "set include directory")] 
-    (fun file -> files := !files @ [file])
-    (Printf.sprintf "$ %s %s %s ...\n" Sys.argv.(0) "spec1.ml" "spec2.ml");
+    [("-I", Arg.String (append_to include_dirs), "specify include directory")] 
+    (append_to files)
+    (Printf.sprintf "$ %s spec1.ml spec2.ml ...\n" Sys.argv.(0));
 
   List.iter Topdirs.dir_directory !include_dirs;
   let all_specs = List.concat (List.map specs_of_file !files) in
