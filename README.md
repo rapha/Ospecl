@@ -1,4 +1,4 @@
-Ospecl is a library that allows you to write executable specifications for your OCaml code à la rspec.
+Ospecl is a library for writing executable specifications for your OCaml code à la rspec.
 
 A spec is a data structure built up using calls to `describe` to provide context and `it` for executable examples. Expectations can be described by `expect`-ing a value to match a provided matcher. `expect` can also be used via its alias `=~`.
 

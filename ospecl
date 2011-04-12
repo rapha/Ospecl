@@ -10,6 +10,8 @@
 #require "unix"
 #require "ospecl"
 
+open Printf
+
 let specs_of_file filename =
   let dir = Filename.dirname filename in
   Topdirs.dir_directory dir;
@@ -17,9 +19,13 @@ let specs_of_file filename =
   if used then
     Obj.obj (Toploop.getvalue "specs")
   else
-    failwith ("Could not use file " ^ filename)
+    failwith (sprintf "Could not use file %s" filename)
 
 let _ =
+  let usage_message = 
+    let this_file = (Filename.basename Sys.argv.(0)) in
+    sprintf "$ %s [options] [spec files]\n" this_file in
+
   let files = ref [] in
   let include_dirs = ref [] in
 
@@ -30,7 +36,7 @@ let _ =
   Arg.parse 
     [("-I", Arg.String (append_to include_dirs), "specify include directory")] 
     (append_to files)
-    (Printf.sprintf "$ %s spec1.ml spec2.ml ...\n" Sys.argv.(0));
+    usage_message;
 
   List.iter Topdirs.dir_directory !include_dirs;
   let all_specs = List.concat (List.map specs_of_file !files) in
