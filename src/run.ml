@@ -74,7 +74,7 @@ module Handlers = struct
 end
 
 let summary_handler (passes, failures, pending) =
-  let examples = passes + failures in
+  let examples = passes + failures + pending in
   let pluralise noun = function
     | 1 -> noun
     | _ -> (noun ^ "s")
