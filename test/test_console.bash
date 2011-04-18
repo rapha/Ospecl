@@ -51,11 +51,19 @@ spec='
   describe "something" [
     it "passes" (1 =~ is equal_to_int 1);
     it "fails" (1 =~ is (less_than 0));
+    it "skips" (pending "implementation");
   ]
   '
+spec_out=$(execute_spec "$spec_src")
 
-assert_stdout "$spec" "^.F$"
+assert_stdout "$spec" "^\.F\*$"
 assert_stdout "$spec" "^Finished in [0-9]\+\.[0-9]\+ seconds$"
-assert_stdout "$spec" "^2 examples, 1 failure$"
+assert_stdout "$spec" "^3 examples, 1 failure$"
+assert_stdout "$spec" "Pending:"
+assert_stdout "$spec" "  1) something skips"
+assert_stdout "$spec" "^        implementation"
+assert_stdout "$spec" "Failures:"
+assert_stdout "$spec" "  1) something fails"
+assert_stdout "$spec" "      Spec.Expectation_failed(\"Expected less than 0 but got 1\")"
 
 assert_exit_code "$spec" 1

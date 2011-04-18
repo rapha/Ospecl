@@ -51,6 +51,20 @@ module Handlers = struct
     | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
         ()
 
+  let skipped_report callback =
+    let skips = ref [] in
+    function
+    | Example_finished result -> begin
+        match result with
+        | Passed _ -> ()
+        | Failed _ -> ()
+        | Skipped _ -> skips := result :: !skips
+      end
+    | Execution_finished ->
+        callback (List.rev !skips)
+    | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
+        ()
+
   let exit_code callback =
     let code = ref 0 in
     function
@@ -83,6 +97,23 @@ let summary_handler (passes, failures, pending) =
 
 let total_time_handler duration = printf "Finished in %f seconds\n" duration
 
+let skipped_report_handler results =
+  let indexed items = 
+    let indices = Array.to_list (Array.init (List.length items) (fun i -> i)) in
+    List.combine indices items 
+  in
+  let report (index, result) = 
+    match result with
+    | Passed _ -> ()
+    | Failed (desc, ex) -> ()
+    | Skipped (desc, reason) -> 
+        printf "  %d) %s\n        %s\n\n" (index+1) desc reason
+  in
+  let skipped = List.filter (function Skipped _ -> true | _ -> false) results in
+  if List.length skipped > 0 then
+    printf "\nPending:\n\n";
+    List.iter report (indexed skipped)
+
 let failure_report_handler results =
   let indexed items = 
     let indices = Array.to_list (Array.init (List.length items) (fun i -> i)) in
@@ -113,6 +144,7 @@ let console =
   Exec.execute [
     Handlers.each_result progress_handler;
     finish_with_nl_handler;
+    Handlers.skipped_report skipped_report_handler;
     Handlers.failure_report failure_report_handler;
     Handlers.total_time total_time_handler;
     Handlers.summary summary_handler;
@@ -151,6 +183,7 @@ let doc =
   Exec.execute [
     doc_handler; 
     finish_with_nl_handler;
+    Handlers.skipped_report skipped_report_handler;
     Handlers.failure_report failure_report_handler;
     Handlers.total_time total_time_handler;
     Handlers.summary summary_handler;
