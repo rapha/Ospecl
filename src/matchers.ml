@@ -44,6 +44,22 @@ let equal_to_bool = equal_to string_of_bool
 let true' = equal_to_bool true
 let false' = equal_to_bool false
 
+let equal_to_option string_of_item =
+  let string_of_option = function
+    | None -> "None" 
+    | Some item -> "Some (" ^ string_of_item item ^ ")"
+  in
+  equal_to string_of_option
+
+let equal_to_list string_of_item =
+  let rec join = function
+    | [] -> ""
+    | [item] -> string_of_item item
+    | item :: rest -> string_of_item item ^ "; " ^ join rest
+  in
+  equal_to (fun items -> "[" ^ join items ^ "]")
+
+
 let has_item matcher =
   let description = "has item that " ^ description_of matcher in
   let test items =
