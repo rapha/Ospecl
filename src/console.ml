@@ -2,11 +2,22 @@ open Spec
 
 open Printf
 
+let normal_text = "[0m"
+let red_text text = "[31m" ^ text ^ normal_text
+let yellow_text text = "[33m" ^ text ^ normal_text
+let green_text text = "[32m" ^ text ^ normal_text
+let grey_text text = "[90m" ^ text ^ normal_text
+
+let color_of = function
+  | Passed _ -> green_text
+  | Skipped _ -> yellow_text
+  | Failed _ -> red_text
+
 let pluralise noun = function
   | 1 -> noun
   | _ -> (noun ^ "s")
 
-let summary_handler =
+let summary_handler color =
   let passes = ref 0 in
   let failures = ref 0 in
   let pending = ref 0 in
@@ -25,7 +36,10 @@ let summary_handler =
         !failures (pluralise "failure" !failures)
         (if !pending > 0 then (sprintf ", %d %s" !pending "pending") else "")
       in
-      print_string message
+      let text_color = (if !failures > 0 then red_text else if !pending > 0 then yellow_text else green_text) in
+      print_string (if color then text_color message else message); 
+      print_string (normal_text);
+      flush stdout
 
   | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
       ()
@@ -47,12 +61,8 @@ let total_time_handler =
   | Group_started _ | Group_finished _ | Example_started _ | Example_finished _ ->
       ()
 
-(* converts a list of items into a list of pairs of (index, item) *)
-let indexed items =
-  let indices = Array.to_list (Array.init (List.length items) (fun i -> i)) in
-  List.combine indices items
 
-let skipped_report_handler =
+let skipped_report_handler color =
   let report = ref "\nPending:\n\n" in
   let count = ref 0 in
   let open Spec.Exec in
@@ -61,7 +71,9 @@ let skipped_report_handler =
       match result with
       | Skipped (desc, reason) -> begin
           incr count;
-          report := !report ^ (sprintf "  %s\n    %s\n\n" desc reason)
+          report := !report ^ (sprintf "  %s\n    %s\n\n"
+            (if color then yellow_text desc else desc)
+            (if color then grey_text reason else reason))
         end
       | Passed _ | Failed _ -> ()
     end
@@ -72,7 +84,7 @@ let skipped_report_handler =
   | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
       ()
 
-let failure_report_handler =
+let failure_report_handler color =
   let report = ref "\nFailures:\n\n" in
   let count = ref 0 in
   let open Spec.Exec in
@@ -81,7 +93,11 @@ let failure_report_handler =
       match result with
       | Failed (desc, ex) -> begin
           incr count;
-          report := !report ^ (sprintf "  %d) %s\n        %s\n\n" !count desc (Printexc.to_string ex))
+          let error_msg = Printexc.to_string ex in
+          report := !report ^ (sprintf "  %d) %s\n        %s\n\n" 
+            !count 
+            desc 
+            (if color then red_text error_msg else error_msg))
         end
       | Passed _ | Skipped _ -> ()
     end
@@ -96,14 +112,17 @@ let finish_with_nl_handler = function
   | Exec.Execution_finished -> print_newline ()
   | _ -> ()
 
-let progress_handler =
+let progress_handler color =
   let open Spec.Exec in
   function
   | Example_finished result -> begin
-      match result with
-      | Passed _ -> print_char '.'
-      | Failed _ -> print_char 'F'
-      | Skipped _ -> print_char '*'
+      let str = 
+        match result with
+        | Passed _ -> "."
+        | Skipped _ -> "*"
+        | Failed _ -> "F"
+      in
+      print_string (if color then color_of result str else str)
     end
   | Execution_started | Execution_finished | Group_started _ | Group_finished _ | Example_started _ ->
       ()
@@ -122,19 +141,21 @@ let exit_handler =
   | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
       ()
 
-let progress = Exec.execute [
-    progress_handler;
+let progress ~color =
+  Exec.execute [
+    progress_handler color;
     finish_with_nl_handler;
-    skipped_report_handler;
-    failure_report_handler;
+    skipped_report_handler color;
+    failure_report_handler color;
     total_time_handler;
-    summary_handler;
+    summary_handler color;
     exit_handler
-]
+  ]
 
-let documentation =
+let documentation ~color =
   let open Spec.Exec in
   let depth = ref 0 in
+  let name = ref "" in
   let indent () =
     String.make (!depth*2) ' '
   in
@@ -148,15 +169,15 @@ let documentation =
         decr depth
     | Example_started path ->
         let description = List.hd (List.rev path) in
-        printf "%s%s " (indent ()) description
+        name := description
     | Example_finished result -> begin
-        let result =
+        let message =
           match result with
-          | Passed _ -> ""
-          | Failed _ -> "(FAILED)"
-          | Skipped (desc, reason) -> sprintf "(PENDING: %s)" reason
+          | Passed _ -> !name
+          | Failed _ -> sprintf "%s (FAILED)" !name
+          | Skipped (_, reason) -> sprintf "%s (PENDING: %s)" !name reason
         in
-        printf "%s\n" result
+        printf "%s%s\n" (indent ()) (if color then color_of result message else message)
       end
     | Execution_started | Execution_finished ->
         ()
@@ -164,9 +185,9 @@ let documentation =
   Exec.execute [
     doc_handler;
     finish_with_nl_handler;
-    skipped_report_handler;
-    failure_report_handler;
+    skipped_report_handler false;
+    failure_report_handler false;
     total_time_handler;
-    summary_handler;
+    summary_handler false;
     exit_handler;
   ]
