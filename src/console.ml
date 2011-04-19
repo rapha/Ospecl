@@ -61,7 +61,7 @@ let skipped_report_handler =
       match result with
       | Skipped (desc, reason) -> begin
           incr count;
-          report := !report ^ (sprintf "  %d) %s\n        %s\n\n" !count desc reason)
+          report := !report ^ (sprintf "  %s\n    %s\n\n" desc reason)
         end
       | Passed _ | Failed _ -> ()
     end
@@ -132,7 +132,7 @@ let progress = Exec.execute [
     exit_handler
 ]
 
-let doc =
+let documentation =
   let open Spec.Exec in
   let depth = ref 0 in
   let indent () =
@@ -152,9 +152,9 @@ let doc =
     | Example_finished result -> begin
         let result =
           match result with
-          | Passed _ -> "(PASSED)"
+          | Passed _ -> ""
           | Failed _ -> "(FAILED)"
-          | Skipped _ -> "(SKIPPED)"
+          | Skipped (desc, reason) -> sprintf "(PENDING: %s)" reason
         in
         printf "%s\n" result
       end

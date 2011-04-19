@@ -36,9 +36,9 @@ let _ =
   let formatters = [
     ("p", Ospecl.Console.progress);
     ("progress", Ospecl.Console.progress);
-    ("d", Ospecl.Console.doc);
-    ("doc", Ospecl.Console.doc);
-    ("documentation", Ospecl.Console.doc);
+    ("d", Ospecl.Console.documentation);
+    ("doc", Ospecl.Console.documentation);
+    ("documentation", Ospecl.Console.documentation);
   ] 
   in
   let choose_format f =
