@@ -28,16 +28,30 @@ let _ =
 
   let files = ref [] in
   let include_dirs = ref [] in
-
   let append_to list_ref value =
     list_ref := !list_ref @ [value]
   in
 
-  Arg.parse 
-    [("-I", Arg.String (append_to include_dirs), "specify include directory")] 
+  let runner = ref Ospecl.Console.progress in
+  let formatters = [
+    ("p", Ospecl.Console.progress);
+    ("progress", Ospecl.Console.progress);
+    ("d", Ospecl.Console.doc);
+    ("doc", Ospecl.Console.doc);
+    ("documentation", Ospecl.Console.doc);
+  ] 
+  in
+  let choose_format f =
+    runner := List.assoc f formatters
+  in
+
+  Arg.parse [
+      ("-I", Arg.String (append_to include_dirs), "specify include directory");
+      ("-format", Arg.Symbol (fst (List.split formatters), choose_format), " choose a formatter");
+    ]
     (append_to files)
     usage_message;
 
   List.iter Topdirs.dir_directory !include_dirs;
   let all_specs = List.concat (List.map specs_of_file !files) in
-  Ospecl.Console.progress all_specs
+  !runner all_specs
