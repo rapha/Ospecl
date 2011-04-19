@@ -56,7 +56,7 @@ spec='
   '
 assert_stdout "$spec" "^\.F\*$"
 assert_stdout "$spec" "^Finished in [0-9]\+\.[0-9]\+ seconds$"
-assert_stdout "$spec" "^3 examples, 1 failure$"
+assert_stdout "$spec" "^3 examples, 1 failure, 1 pending$"
 assert_stdout "$spec" "^Pending:$"
 assert_stdout "$spec" "^  1) something skips$"
 assert_stdout "$spec" "^        implementation$"

@@ -20,11 +20,17 @@ let summary_handler =
     end
   | Execution_finished ->
       let examples = !passes + !failures + !pending in
-      printf "%d %s, %d %s\n" examples (pluralise "example" examples) !failures (pluralise "failure" !failures)
+      let message = sprintf "%d %s, %d %s%s\n"
+        examples (pluralise "example" examples)
+        !failures (pluralise "failure" !failures)
+        (if !pending > 0 then (sprintf ", %d %s" !pending "pending") else "")
+      in
+      print_string message
+
   | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
       ()
 
-let total_time_handler = 
+let total_time_handler =
   let start = ref None in
   let open Spec.Exec in
   function
@@ -42,9 +48,9 @@ let total_time_handler =
       ()
 
 (* converts a list of items into a list of pairs of (index, item) *)
-let indexed items = 
+let indexed items =
   let indices = Array.to_list (Array.init (List.length items) (fun i -> i)) in
-  List.combine indices items 
+  List.combine indices items
 
 let skipped_report_handler =
   let report = ref "\nPending:\n\n" in
@@ -53,7 +59,7 @@ let skipped_report_handler =
   function
   | Example_finished result -> begin
       match result with
-      | Skipped (desc, reason) -> begin 
+      | Skipped (desc, reason) -> begin
           incr count;
           report := !report ^ (sprintf "  %d) %s\n        %s\n\n" !count desc reason)
         end
@@ -61,7 +67,7 @@ let skipped_report_handler =
     end
   | Execution_finished -> begin
       if !count > 0 then
-        printf "%s" !report
+        print_string !report
     end
   | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
       ()
@@ -73,7 +79,7 @@ let failure_report_handler =
   function
   | Example_finished result -> begin
       match result with
-      | Failed (desc, ex) -> begin 
+      | Failed (desc, ex) -> begin
           incr count;
           report := !report ^ (sprintf "  %d) %s\n        %s\n\n" !count desc (Printexc.to_string ex))
         end
@@ -86,14 +92,14 @@ let failure_report_handler =
   | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
       ()
 
-let finish_with_nl_handler = function 
-  | Exec.Execution_finished -> print_newline () 
+let finish_with_nl_handler = function
+  | Exec.Execution_finished -> print_newline ()
   | _ -> ()
 
-let progress_handler = 
+let progress_handler =
   let open Spec.Exec in
   function
-  | Example_finished result -> begin 
+  | Example_finished result -> begin
       match result with
       | Passed _ -> print_char '.'
       | Failed _ -> print_char 'F'
@@ -126,10 +132,10 @@ let progress = Exec.execute [
     exit_handler
 ]
 
-let doc = 
+let doc =
   let open Spec.Exec in
   let depth = ref 0 in
-  let indent () = 
+  let indent () =
     String.make (!depth*2) ' '
   in
   let doc_handler = function
@@ -138,13 +144,13 @@ let doc =
         printf "%s%s\n" (indent ()) name;
         incr depth
       end
-    | Group_finished _ -> 
+    | Group_finished _ ->
         decr depth
     | Example_started path ->
         let description = List.hd (List.rev path) in
         printf "%s%s " (indent ()) description
     | Example_finished result -> begin
-        let result = 
+        let result =
           match result with
           | Passed _ -> "(PASSED)"
           | Failed _ -> "(FAILED)"
@@ -156,7 +162,7 @@ let doc =
         ()
   in
   Exec.execute [
-    doc_handler; 
+    doc_handler;
     finish_with_nl_handler;
     skipped_report_handler;
     failure_report_handler;
