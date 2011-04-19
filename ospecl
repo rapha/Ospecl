@@ -40,4 +40,4 @@ let _ =
 
   List.iter Topdirs.dir_directory !include_dirs;
   let all_specs = List.concat (List.map specs_of_file !files) in
-  Ospecl.Run.console all_specs
+  Ospecl.Console.progress all_specs

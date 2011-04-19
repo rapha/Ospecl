@@ -3,14 +3,14 @@ all: test
 test: unit_tests.byte
 	ocamlrun -b unit_tests.byte && bash test/test_console.bash
 
-unit_tests.byte: ospecl.cma test/test_matcher.cmo test/test_matchers.cmo test/test_spec.cmo test/test_run.cmo
-	$(OCAMLC) -o unit_tests.byte unix.cma ospecl.cma test/test_matcher.cmo test/test_matchers.cmo test/test_spec.cmo test/test_run.cmo
+unit_tests.byte: ospecl.cma test/test_matcher.cmo test/test_matchers.cmo test/test_spec.cmo
+	$(OCAMLC) -o unit_tests.byte unix.cma ospecl.cma test/test_matcher.cmo test/test_matchers.cmo test/test_spec.cmo
 
 examples: ospecl.cma examples/account.cmo examples/account_spec.ml
 	./ospecl examples/account_spec.ml
 
-ospecl.cma: src/matcher.cmo src/matchers.cmo src/spec.cmo src/run.cmo
-	$(OCAMLC) -pack -o ospecl.cma src/matcher.cmo src/matchers.cmo src/spec.cmo src/run.cmo
+ospecl.cma: src/matcher.cmo src/matchers.cmo src/spec.cmo src/console.cmo
+	$(OCAMLC) -pack -o ospecl.cma src/matcher.cmo src/matchers.cmo src/spec.cmo src/console.cmo
 
 clean:
 	find -E . -regex '.*\.(cm.|byte|source_dependencies)' | xargs rm
