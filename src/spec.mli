@@ -15,6 +15,12 @@ val expect : 'a -> 'a Matcher.t -> expectation
 val (=~) : 'a -> 'a Matcher.t -> expectation
 val pending : string -> expectation
 
+(* Filters a list of specs, removing: 
+ *   all examples whose description does not match the regex
+ *   all groups which do not contain any matching examples
+ *)
+val filter : Str.regexp -> t list -> t list
+
 (* get the results of executing a spec *)
 val eval : t -> result list
 
@@ -35,5 +41,5 @@ module Exec : sig
   type handler = (event -> unit)
 
   (* execute specs matching the regexp with the given event handlers *)
-  val execute : Str.regexp -> handler list -> t list -> unit
+  val execute : handler list -> t list -> unit
 end

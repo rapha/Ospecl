@@ -1,27 +1,20 @@
 (* private helpers *)
 
-let rec some_values = function
-  | [] -> []
-  | None :: rest -> some_values rest
-  | Some value :: rest -> (value :: some_values rest)
-
 (* constructing specs *)
 type expectation = Expectation of (unit -> unit) | Pending of string
 
 type t = Example of string list * expectation | Group of string list * t list
 
-let it description expectation = Example ([description], expectation)
-let describe name specs = Group ([name], specs)
-
-let join path = match path with
-  | [] -> ""
-  | first::rest -> List.fold_left (fun result element -> result ^ " " ^ element) first rest
-
 let rec contextualise context = function
-  | Example (path, expectation) -> Example (context @ path, expectation)
+  | Example (path, expectation) -> 
+      Example (context @ path, expectation)
   | Group (path, specs) -> 
       let full_path = context @ path in
-      Group (full_path, List.map (contextualise full_path) specs)
+      Group (full_path, List.map (contextualise context) specs)
+
+let it description expectation = Example ([description], expectation)
+let describe name specs = Group ([name], List.map (contextualise [name]) specs)
+
 
 (* expressing expectations *)
 exception Expectation_failed of string
@@ -40,29 +33,40 @@ let pending blocker = Pending blocker
 
 let (=~) = expect
 
-(* t -> t option *)
-let name_matches regex spec = match spec with
-  | Example (path, _) -> begin
-      let full_description = join path in
-      try 
-        ignore (Str.search_forward regex full_description 0);
-        Some spec
-      with Not_found ->
-        None
-    end
-  | Group _ -> 
-      Some spec
+let join path = match path with
+  | [] -> ""
+  | first::rest -> List.fold_left (fun result element -> result ^ " " ^ element) first rest
 
-let rec filter selector spec =
-  match spec with
-  | Example (path, _) -> 
-      selector spec
-  | Group (path, specs) ->
-      let selected = some_values (List.map (filter selector) specs) in
-      if selected != [] then
-        Some (Group (path, selected))
-      else
-        None
+let filter regex specs = 
+  let description_matches spec = match spec with
+    | Example (path, _) -> begin
+        let full_description = join path in
+        try 
+          ignore (Str.search_forward regex full_description 0);
+          Some spec
+        with Not_found ->
+          None
+      end
+    | Group _ -> 
+        Some spec
+  in
+  let rec some_values = function
+    | [] -> []
+    | None :: rest -> some_values rest
+    | Some value :: rest -> (value :: some_values rest)
+  in
+  let rec filter_spec selector spec =
+    match spec with
+    | Example (path, _) -> 
+        selector spec
+    | Group (path, specs) ->
+        let selected = some_values (List.map (filter_spec selector) specs) in
+        if selected != [] then
+          Some (Group (path, selected))
+        else
+          None
+  in
+  some_values (List.map (filter_spec description_matches) specs)
 
 (* executing the specs *)
 type result = Passed of string | Failed of string * exn | Skipped of string * string
@@ -80,12 +84,10 @@ module Exec = struct
 
   type handler = (event -> unit)
 
-  let execute regex handlers specs =
+  let execute handlers specs =
     let fire event =
       List.iter (function handle -> handle event) handlers
     in
-    let contextualised = List.map (contextualise []) specs in
-    let filtered = some_values (List.map (filter (name_matches regex)) contextualised) in
     let rec exec_spec = function
       | Example (path, expectation) -> begin
           let description = join path in
@@ -112,14 +114,14 @@ module Exec = struct
           fire (Group_finished path)
     in
     fire Execution_started;
-    List.iter exec_spec filtered;
+    List.iter exec_spec specs;
     fire Execution_finished
 
 end
 
 let eval specs =
   let results = ref [] in
-  Exec.execute (Str.regexp "") [(function
+  Exec.execute [(function
     | Exec.Example_finished result -> results := (result :: !results)
     | _ -> ()
   )] [specs];
