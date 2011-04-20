@@ -53,7 +53,7 @@ let test_exec =
   let log_to record event = record := !record @ [event] in
   let record1, record2 = ref [], ref [] in
 
-  Exec.execute [log_to record1; log_to record2] specs;
+  Exec.execute (Str.regexp "") [log_to record1; log_to record2] specs;
 
   assert (!record1 = expected_events);
   assert (!record2 = expected_events)

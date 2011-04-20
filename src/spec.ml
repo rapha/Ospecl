@@ -1,3 +1,10 @@
+(* private helpers *)
+
+let rec some_values = function
+  | [] -> []
+  | None :: rest -> some_values rest
+  | Some value :: rest -> (value :: some_values rest)
+
 (* constructing specs *)
 type expectation = Expectation of (unit -> unit) | Pending of string
 
@@ -10,9 +17,11 @@ let join path = match path with
   | [] -> ""
   | first::rest -> List.fold_left (fun result element -> result ^ " " ^ element) first rest
 
-let contextualize context = function
+let rec contextualise context = function
   | Example (path, expectation) -> Example (context @ path, expectation)
-  | Group (path, specs) -> Group (context @ path, specs)
+  | Group (path, specs) -> 
+      let full_path = context @ path in
+      Group (full_path, List.map (contextualise full_path) specs)
 
 (* expressing expectations *)
 exception Expectation_failed of string
@@ -31,6 +40,30 @@ let pending blocker = Pending blocker
 
 let (=~) = expect
 
+(* t -> t option *)
+let name_matches regex spec = match spec with
+  | Example (path, _) -> begin
+      let full_description = join path in
+      try 
+        ignore (Str.search_forward regex full_description 0);
+        Some spec
+      with Not_found ->
+        None
+    end
+  | Group _ -> 
+      Some spec
+
+let rec filter selector spec =
+  match spec with
+  | Example (path, _) -> 
+      selector spec
+  | Group (path, specs) ->
+      let selected = some_values (List.map (filter selector) specs) in
+      if selected != [] then
+        Some (Group (path, selected))
+      else
+        None
+
 (* executing the specs *)
 type result = Passed of string | Failed of string * exn | Skipped of string * string
 
@@ -47,10 +80,12 @@ module Exec = struct
 
   type handler = (event -> unit)
 
-  let execute handlers specs =
+  let execute regex handlers specs =
     let fire event =
       List.iter (function handle -> handle event) handlers
     in
+    let specs = List.map (contextualise []) specs in
+    let specs = some_values (List.map (filter (name_matches regex)) specs) in
     let rec exec_spec = function
       | Example (path, expectation) -> begin
           let description = join path in
@@ -58,7 +93,7 @@ module Exec = struct
           let result =
             match expectation with
             | Expectation example ->
-                begin 
+                begin
                   try
                     example ();
                     Passed description
@@ -73,8 +108,7 @@ module Exec = struct
         end
       | Group (path, specs) ->
           fire (Group_started path);
-          let contextualized = List.map (contextualize path) specs in
-          List.iter exec_spec contextualized;
+          List.iter exec_spec specs;
           fire (Group_finished path)
     in
     fire Execution_started;
@@ -85,8 +119,9 @@ end
 
 let eval specs =
   let results = ref [] in
-  Exec.execute [(function
+  Exec.execute (Str.regexp "") [(function
     | Exec.Example_finished result -> results := (result :: !results)
     | _ -> ()
   )] [specs];
   List.rev !results
+

@@ -7,6 +7,7 @@
  *)
 
 #use "topfind"
+#require "str"
 #require "unix"
 #require "ospecl"
 
@@ -47,14 +48,17 @@ let _ =
 
   let color = ref false in
 
+  let pattern = ref "" in
+
   Arg.parse [
       ("-I", Arg.String (append_to include_dirs), "specify include directory");
       ("-format", Arg.Symbol (fst (List.split formatters), choose_format), " choose a formatter");
       ("-color", Arg.Set color, "enable color in the output");
+      ("-example", Arg.Set_string pattern, "PATTERN run examples whose full descriptions match this pattern");
     ]
     (append_to files)
     usage_message;
 
   List.iter Topdirs.dir_directory !include_dirs;
   let all_specs = List.concat (List.map specs_of_file !files) in
-  !runner ~color:!color all_specs
+  !runner ~matching:(Str.regexp !pattern) ~color:!color all_specs

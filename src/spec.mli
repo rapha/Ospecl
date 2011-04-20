@@ -34,6 +34,6 @@ module Exec : sig
   (* handlers are executed to respond to execution events *)
   type handler = (event -> unit)
 
-  (* execute specs with the given event handlers *)
-  val execute : handler list -> t list -> unit
+  (* execute specs matching the regexp with the given event handlers *)
+  val execute : Str.regexp -> handler list -> t list -> unit
 end

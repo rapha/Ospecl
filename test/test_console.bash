@@ -22,7 +22,7 @@ open Ospecl.Spec
 open Ospecl.Matchers
 
 let _ =
-  Ospecl.Console.progress ~color:false [
+  Ospecl.Console.progress ~matching:(Str.regexp "") ~color:false [
     $spec_src
   ]
 EOF

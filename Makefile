@@ -4,7 +4,7 @@ test: unit_tests.byte
 	ocamlrun -b unit_tests.byte && bash test/test_console.bash
 
 unit_tests.byte: ospecl.cma test/test_matcher.cmo test/test_matchers.cmo test/test_spec.cmo
-	$(OCAMLC) -o unit_tests.byte unix.cma ospecl.cma test/test_matcher.cmo test/test_matchers.cmo test/test_spec.cmo
+	$(OCAMLC) -o unit_tests.byte str.cma unix.cma ospecl.cma test/test_matcher.cmo test/test_matchers.cmo test/test_spec.cmo
 
 examples: ospecl.cma examples/account.cmo examples/account_spec.ml
 	./ospecl examples/account_spec.ml

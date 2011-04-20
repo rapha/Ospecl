@@ -141,8 +141,8 @@ let exit_handler =
   | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
       ()
 
-let progress ~color =
-  Exec.execute [
+let progress ~matching ~color =
+  Exec.execute matching [
     progress_handler color;
     finish_with_nl_handler;
     skipped_report_handler color;
@@ -152,7 +152,7 @@ let progress ~color =
     exit_handler
   ]
 
-let documentation ~color =
+let documentation ~matching ~color =
   let open Spec.Exec in
   let depth = ref 0 in
   let name = ref "" in
@@ -182,7 +182,7 @@ let documentation ~color =
     | Execution_started | Execution_finished ->
         ()
   in
-  Exec.execute [
+  Exec.execute matching [
     doc_handler;
     finish_with_nl_handler;
     skipped_report_handler false;
