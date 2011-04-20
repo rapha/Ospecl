@@ -31,4 +31,4 @@ Specs may be executed using the command line runner:
     
 `ospecl` accepts a list of source files, each of which must define a single value, `specs`, with type `Spec.t list`. The specs from each of these files will be executed in order and the results reported together.
 
-Ospecl also comes with runner functions `Ospecl.Run.console` and `Ospecl.Run.doc` which can be executed in your own script run from the command line. Additionally you can build altogether new runners by calling `Ospecl.Spec.Exec.execute` with your own set of handlers for the execution events.
+Ospecl also comes with runner functions `Ospecl.Console.progress` and `Ospecl.Console.documentation` which can be executed in your own script which is run from the command line. You can also build altogether new runners by calling `Ospecl.Spec.Exec.execute` with your own set of handlers for the execution events.
