@@ -84,8 +84,8 @@ module Exec = struct
     let fire event =
       List.iter (function handle -> handle event) handlers
     in
-    let specs = List.map (contextualise []) specs in
-    let specs = some_values (List.map (filter (name_matches regex)) specs) in
+    let contextualised = List.map (contextualise []) specs in
+    let filtered = some_values (List.map (filter (name_matches regex)) contextualised) in
     let rec exec_spec = function
       | Example (path, expectation) -> begin
           let description = join path in
@@ -112,7 +112,7 @@ module Exec = struct
           fire (Group_finished path)
     in
     fire Execution_started;
-    List.iter exec_spec specs;
+    List.iter exec_spec filtered;
     fire Execution_finished
 
 end
