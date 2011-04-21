@@ -185,9 +185,9 @@ let documentation ~color =
   Exec.execute [
     doc_handler;
     finish_with_nl_handler;
-    skipped_report_handler false;
-    failure_report_handler false;
+    skipped_report_handler color;
+    failure_report_handler color;
     total_time_handler;
-    summary_handler false;
+    summary_handler color;
     exit_handler;
   ]
