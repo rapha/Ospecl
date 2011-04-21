@@ -50,12 +50,12 @@ let _ =
 
   let pattern = ref "" in
 
-  Arg.parse [
-      ("-I", Arg.String (append_to include_dirs), "specify include directory");
+  Arg.parse (Arg.align [
+      ("-I", Arg.String (append_to include_dirs), "DIRECTORY specify include directory");
       ("-format", Arg.Symbol (fst (List.split formatters), choose_format), " choose a formatter");
-      ("-color", Arg.Set color, "enable color in the output");
+      ("-color", Arg.Set color, " enable color in the output");
       ("-example", Arg.Set_string pattern, "PATTERN run examples whose full descriptions match this pattern");
-    ]
+    ])
     (append_to files)
     usage_message;
 
