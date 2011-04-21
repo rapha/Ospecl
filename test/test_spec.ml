@@ -28,6 +28,32 @@ let test_eval =
   in
   assert (eval spec = expected_results)
 
+
+let test_filter =
+  let dummy_expectation = pending "something" in
+  let contains_a = Str.regexp "a" in
+
+  let matching_example = it "a" dummy_expectation in
+  assert (filter contains_a [matching_example] = [matching_example]);
+
+  let mismatching_example = it "b" dummy_expectation in
+  assert (filter contains_a [mismatching_example] = []);
+
+  let matching_group = describe "a" [mismatching_example] in
+  assert (filter contains_a [matching_group] = [matching_group]);
+
+  let group_with_match = describe "b" [matching_example] in
+  assert (filter contains_a [group_with_match] = [group_with_match]);
+
+  let empty_group = describe "a" [] in
+  assert (filter contains_a [empty_group] = []);
+
+  let group_without_match = describe "b" [mismatching_example] in
+  assert (filter contains_a [group_without_match] = []);
+
+  assert (filter contains_a [matching_example; mismatching_example] = [matching_example])
+
+
 let test_exec =
   let specs = [
     describe "1" [
