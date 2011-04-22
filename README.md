@@ -4,7 +4,7 @@ Ospecl is a library for writing executable specifications for your OCaml code à
 
 Ospecl allows you to build *specs*, which are nested data structures combining textual descriptions of the component's behaviour, together with the code that can verify it. Specs may then be executed to verify your component's continued conformance.
 
-Specs are built using calls to `describe` to provide context for a group of executable examples, each constructed through `it` calls. Examples contain a single *expectation* which uses *matcher*s to test whether a given value meets some criteria.
+Specs are built using calls to `describe` to provide context for a group of executable examples, each constructed through `it` calls. Examples contain a single *expectation* which uses *matchers* to test whether a given value meets some criteria.
 
 
 ## Usage
