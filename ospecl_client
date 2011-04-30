@@ -1,0 +1,112 @@
+#!/usr/bin/env ocaml
+
+(**
+ * $ ospecl_client -port <port> [spec files... ]
+ *
+ * Connects to a running ospecl_server on the given port, sends each spec file name, and handles the execution events as they are sent back.
+ * The supplied spec files should be source files which define a single top level value - `specs : Spec.t list`.
+ *)
+
+#use "topfind"
+#require "str"
+#require "unix"
+#require "ospecl"
+#thread
+
+open Printf
+
+(* thread-safe mutable stack *)
+module SafeStack : sig
+  type 'a t
+  val create : 'a list -> 'a t
+  val pop : 'a t -> 'a option
+end = struct
+  type 'a t = {
+    mutable stack : 'a list;
+    lock : Mutex.t
+  }
+
+  let create items = {
+    stack = items;
+    lock = Mutex.create ()
+  }
+
+  let pop safe_stack =
+    Mutex.lock safe_stack.lock;
+    let top = 
+      match safe_stack.stack with
+      | [] -> None
+      | first::rest -> begin
+          safe_stack.stack <- rest;
+          Some first
+        end
+    in
+    Mutex.unlock safe_stack.lock;
+    top
+end
+
+let fire handlers event =
+  List.iter (fun handle -> handle event) handlers
+
+let rec handle_events_on in_chan handlers =
+  let open Ospecl.Spec.Exec in
+  match input_value in_chan with
+  | Execution_finished -> ()
+  | Execution_started -> 
+      handle_events_on in_chan handlers
+  | event -> begin
+      fire handlers event;
+      handle_events_on in_chan handlers
+    end
+
+let execute_remotely files handlers address =
+  let (in_chan, out_chan) = Unix.open_connection address in
+  let rec process_files files =
+    match SafeStack.pop files with
+    | None -> Unix.shutdown_connection in_chan
+    | Some file -> begin
+        output_string out_chan (file ^ "\n");
+        flush out_chan;
+        handle_events_on in_chan handlers;
+        process_files files
+      end
+  in
+  process_files files
+
+let _ =
+  let ports = ref [] in
+  let spec_files = ref [] in
+
+  let append_to list_ref value =
+    list_ref := !list_ref @ [value]
+  in
+
+  let color = ref false in
+
+  let formatter = ref Ospecl.Console.progress in
+  let formatters = [
+    ("p", Ospecl.Console.progress);
+    ("progress", Ospecl.Console.progress);
+    ("d", Ospecl.Console.documentation);
+    ("doc", Ospecl.Console.documentation);
+    ("documentation", Ospecl.Console.documentation);
+  ] 
+  in
+  let choose_format f =
+    formatter := List.assoc f formatters
+  in
+
+  Arg.parse [
+    ("-port", Arg.Int (append_to ports), "PORT to connect to");
+    ("-color", Arg.Set color, " enable color in the output");
+    ("-format", Arg.Symbol (fst (List.split formatters), choose_format), " choose a formatter");
+  ] (append_to spec_files) "";
+
+  let handlers = !formatter ~color:!color in
+  let addresses = List.map (fun port -> Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", port)) !ports in
+  let spec_file_stack = SafeStack.create !spec_files in
+    
+  fire handlers Ospecl.Spec.Exec.Execution_started;
+  let threads = List.map (Thread.create (execute_remotely spec_file_stack handlers)) addresses in
+  List.iter Thread.join threads;
+  fire handlers Ospecl.Spec.Exec.Execution_finished;

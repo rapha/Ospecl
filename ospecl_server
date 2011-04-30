@@ -1,0 +1,60 @@
+#!/usr/bin/env ocaml
+
+(**
+ * $ ospecl_server -I <dir_with_cmo_files> -l <port>
+ *
+ * Starts a server which listens on the given port. Clients can connect and
+ * send filenames of spec source files which define a single value `specs : Ospecl.Spec.t list`.
+ * These specs will be executed and the execution events sent back to the client.
+ *
+ * The server can load modules referenced in the spec files by searching the directories specified with the -I flag.
+ *)
+
+#use "topfind"
+#require "str"
+#require "unix"
+#require "ospecl"
+
+open Printf
+
+let specs_of_file filename =
+  Topdirs.dir_use Format.std_formatter filename;
+  Obj.obj (Toploop.getvalue "specs")
+
+let rec execute_spec_files include_dirs in_chan out_chan =
+  List.iter Topdirs.dir_directory include_dirs;
+  let send_back event = 
+    output_value out_chan event; 
+    flush out_chan;
+  in
+  try 
+    while true do
+      let spec_file = input_line in_chan in
+      let specs = specs_of_file spec_file in
+      Ospecl.Spec.Exec.execute [send_back] specs
+    done
+  with End_of_file -> ()
+
+let _ =
+  let usage_message = 
+    let this_file = (Filename.basename Sys.argv.(0)) in
+    sprintf "usage: %s [options]\n" this_file 
+  in
+
+  let append_to list_ref value =
+    list_ref := !list_ref @ [value]
+  in
+
+  let port = ref 0 in
+  let include_dirs = ref [] in
+
+  Arg.parse (Arg.align [
+      ("-l", Arg.Set_int port, "PORT to listen on");
+      ("-I", Arg.String (append_to include_dirs), "DIRECTORY to look for .cmo files");
+  ])
+  ignore 
+  usage_message;
+
+  let address = (Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", !port)) in
+
+  Unix.establish_server (execute_spec_files !include_dirs) address
