@@ -33,7 +33,7 @@ let _ =
     list_ref := !list_ref @ [value]
   in
 
-  let runner = ref Ospecl.Console.progress in
+  let formatter = ref Ospecl.Console.progress in
   let formatters = [
     ("p", Ospecl.Console.progress);
     ("progress", Ospecl.Console.progress);
@@ -43,7 +43,7 @@ let _ =
   ] 
   in
   let choose_format f =
-    runner := List.assoc f formatters
+    formatter := List.assoc f formatters
   in
 
   let color = ref false in
@@ -59,7 +59,9 @@ let _ =
     (append_to files)
     usage_message;
 
+  let handlers = !formatter ~color:!color in
+
   List.iter Topdirs.dir_directory !include_dirs;
   let all_specs = List.concat (List.map specs_of_file !files) in
   let filtered = Ospecl.Spec.filter (Str.regexp !pattern) all_specs in
-  !runner ~color:!color filtered
+  Ospecl.Spec.Exec.execute handlers filtered

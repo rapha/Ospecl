@@ -65,10 +65,8 @@ Thereafter:
     
 `ospecl` accepts a list of ocaml script files, each of which must define a single value called `specs` of type `Ospecl.Spec.t list`. The specs from each of these files will be executed and the results reported together.
 
-### Provided runners
+### Runner function
 
-Ospecl comes with runner functions `Ospecl.Console.progress` and `Ospecl.Console.documentation` which take a list of specs, execute them, print the results to stdout and exit. They're designed to be used in your own spec runner which is run from the shell.
+Specs may be executed from your own code by calling the `Ospecl.Spec.Exec.execute` function, which takes a list of `handler` s and a list of specs and executes each spec, passing appropriate the execution events all the handlers as they occur. Two sets of handlers are currently provided: `Ospecl.Console.progress` and `Ospecl.Console.documentation`. The meaning of these handler sets roughly corresponds to the 'progress' and 'documentation' formats in rspec.
 
-### Custom runners
-
-Custom runners may be built by calling `Ospecl.Spec.Exec.execute` with your own set of handlers for the events that are fired during the execution of the specs.
+You may also define your own handlers to handle execution events in whatever way you wish. The execution events are defined in the `Ospecl.Spec.Exec` module.

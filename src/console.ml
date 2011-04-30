@@ -141,16 +141,15 @@ let exit_handler =
   | Execution_started | Group_started _ | Group_finished _ | Example_started _ ->
       ()
 
-let progress ~color =
-  Exec.execute [
-    progress_handler color;
-    finish_with_nl_handler;
-    skipped_report_handler color;
-    failure_report_handler color;
-    total_time_handler;
-    summary_handler color;
-    exit_handler
-  ]
+let progress ~color = [
+  progress_handler color;
+  finish_with_nl_handler;
+  skipped_report_handler color;
+  failure_report_handler color;
+  total_time_handler;
+  summary_handler color;
+  exit_handler
+]
 
 let documentation ~color =
   let open Spec.Exec in
@@ -182,7 +181,7 @@ let documentation ~color =
     | Execution_started | Execution_finished ->
         ()
   in
-  Exec.execute [
+  [
     doc_handler;
     finish_with_nl_handler;
     skipped_report_handler color;

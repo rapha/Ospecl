@@ -1,4 +1,4 @@
 (* run specs, printing progress and results to stdout, and exit *)
-val progress: color:bool -> Spec.t list -> unit
+val progress: color:bool -> Spec.Exec.handler list
 (* run specs, printing spec descriptions and results to stdout, and exit *)
-val documentation: color:bool -> Spec.t list -> unit
+val documentation: color:bool -> Spec.Exec.handler list
