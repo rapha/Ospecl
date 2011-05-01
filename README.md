@@ -59,13 +59,13 @@ There are several ways to execute specs.
 
     $ ospecl -I dir_with_cmo_files my_spec1.ml my_spec2.ml my_spec3.ml 
     
-`ospecl` accepts a list of ocaml script files, each of which must define a single value called `specs` of type `Ospecl.Spec.t list`. The specs from each of these files will be executed and the results reported together.
+`ospecl` accepts a list of ocaml script files, each of which must define a single value called `specs` of type `Ospecl.Spec.t list`. The specs from each of these files will be executed in order and the results reported together.
 
 ### Parallel
 
 You can start `ospecl_server` s and have `ospecl_client` s connect to them with any number of parallel connections. An ospecl server will respond to each connection by forking off a new process which receives spec file names, executes the specs defined in them, and sends the execution events back to the client. You may thus request a client to open several connections to the same server, or connect it to several different servers and the client will distribute the specs across these connections.
 
-The servers need not be on the same machine as the client but currently no provision is made for sending the spec files themselves or the modules they reference from the client to the server, so at present they must share a filesystem in order for the server to be able to discover the spec files. The servers can be started with a list of directories to search for the referenced modules.
+The servers need not be on the same machine as the client but as yet no provision is made for sending the spec files themselves or the modules they reference from the client to the server, so at present they must share a filesystem in order for the server to be able to discover the spec files. The servers can be started with a list of directories to search for the referenced modules.
 
 e.g.
 
