@@ -1,19 +1,22 @@
 #!/usr/bin/env ocaml
 
-(**
- *)
-
 #use "topfind"
 #require "str"
 #require "unix"
 #require "ospecl"
 
 
+let info verbose str =
+  if verbose then begin
+    Printf.printf "%s\n" str;
+    flush stdout
+  end else ()
+
 let specs_of_file filename =
   Topdirs.dir_use Format.std_formatter filename;
   Obj.obj (Toploop.getvalue "specs")
 
-let rec execute_spec_files in_chan out_chan =
+let rec execute_spec_files verbose in_chan out_chan =
   let send_back event =
     output_value out_chan event;
     flush out_chan;
@@ -21,6 +24,7 @@ let rec execute_spec_files in_chan out_chan =
   try
     while true do
       let spec_file = input_line in_chan in
+      info verbose (Printf.sprintf "rx: %s" spec_file);
       let specs = specs_of_file spec_file in
       Ospecl.Spec.Exec.execute [send_back] specs
     done
@@ -41,10 +45,12 @@ Starts a server which listens on the given port. Clients can connect and send fi
 
   let port = ref 0 in
   let include_dirs = ref [] in
+  let verbose = ref false in
 
   Arg.parse (Arg.align [
       ("-l", Arg.Set_int port, "PORT to listen on");
       ("-I", Arg.String (append_to include_dirs), "DIRECTORY to look for .cmo files referenced in the spec files");
+      ("-v", Arg.Set verbose, " print debugging output");
   ])
   ignore
   usage_message;
@@ -52,4 +58,5 @@ Starts a server which listens on the given port. Clients can connect and send fi
   let address = (Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1", !port)) in
 
   List.iter Topdirs.dir_directory !include_dirs;
-  Unix.establish_server execute_spec_files address
+  info !verbose (Printf.sprintf "Listening on port %d" !port);
+  Unix.establish_server (execute_spec_files !verbose) address
