@@ -67,6 +67,6 @@ Thereafter:
 
 ### Runner function
 
-Specs may be executed from your own code by calling the `Ospecl.Spec.Exec.execute` function, which takes a list of `handler` s and a list of specs and executes each spec, passing appropriate the execution events all the handlers as they occur. Two sets of handlers are currently provided: `Ospecl.Console.progress` and `Ospecl.Console.documentation`. The meaning of these handler sets roughly corresponds to the 'progress' and 'documentation' formats in rspec.
+Specs may be executed from your own code by calling the `Ospecl.Spec.Exec.execute` function, which takes a list of `handler` s and a list of specs and executes each spec, passing the appropriate execution events to the handlers as they occur. Two sets of handlers are currently provided: `Ospecl.Console.progress` and `Ospecl.Console.documentation`. The meaning of these handlers roughly corresponds to the 'progress' and 'documentation' formats in rspec.
 
 You may also define your own handlers to handle execution events in whatever way you wish. The execution events are defined in the `Ospecl.Spec.Exec` module.
