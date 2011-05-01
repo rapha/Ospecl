@@ -40,31 +40,34 @@ end
 let fire handlers event =
   List.iter (fun handle -> handle event) handlers
 
-(* handle the events sent back for the execution of a single spec file *)
-let rec handle_events_on in_chan handlers =
-  let open Ospecl.Spec.Exec in
-  match input_value in_chan with
-  | Execution_finished -> () (* last event, so stop *)
-  | Execution_started ->     (* skip these *)
-      handle_events_on in_chan handlers
-  | event -> begin
-      fire handlers event;
-      handle_events_on in_chan handlers
-    end
+let execute_file_remotely (in_chan, out_chan) handlers filename =
+  let rec handle_next_event handlers =
+    let open Ospecl.Spec.Exec in
+    match input_value in_chan with
+    | Execution_finished -> () (* last event, so stop *)
+    | Execution_started ->     (* don't forward these *)
+        handle_next_event handlers
+    | event -> begin
+        fire handlers event;
+        handle_next_event handlers
+      end
+  in
+  output_string out_chan (filename ^ "\n");
+  flush out_chan;
+  handle_next_event handlers
 
 let execute_remotely files handlers address =
-  let (in_chan, out_chan) = Unix.open_connection address in
-  let rec process_files files =
+  let (in_chan, out_chan) as channels = Unix.open_connection address in
+  let execute_file = execute_file_remotely channels handlers in
+  let rec execute_next files =
     match SafeStack.pop files with
     | None -> Unix.shutdown_connection in_chan
     | Some file -> begin
-        output_string out_chan (file ^ "\n");
-        flush out_chan;
-        handle_events_on in_chan handlers;
-        process_files files
+        execute_file file;
+        execute_next files
       end
   in
-  process_files files
+  execute_next files
 
 let _ =
   let usage_message =
@@ -75,7 +78,7 @@ Connects to a running ospecl_server at the given address, and sends each spec fi
 " this_file
   in
 
-  let parallel_connections = ref 1 in
+  let connections_per_server = ref 1 in
   let color = ref false in
   let address_strings = ref [] in
   let spec_files = ref [] in
@@ -89,7 +92,6 @@ Connects to a running ospecl_server at the given address, and sends each spec fi
     ("p", Ospecl.Console.progress);
     ("progress", Ospecl.Console.progress);
     ("d", Ospecl.Console.documentation);
-    ("doc", Ospecl.Console.documentation);
     ("documentation", Ospecl.Console.documentation);
   ]
   in
@@ -99,15 +101,15 @@ Connects to a running ospecl_server at the given address, and sends each spec fi
 
   Arg.parse (Arg.align [
     ("-address", Arg.String (append_to address_strings), "IP:PORT of a server to run the specs on");
-    ("-j", Arg.Set_int parallel_connections, "N number of parallel connections to each server");
+    ("-j", Arg.Set_int connections_per_server, "N number of parallel connections to each server");
     ("-color", Arg.Set color, " enable color in the output");
     ("-format", Arg.Symbol (fst (List.split formatters), choose_format), " choose a formatter");
   ]) (append_to spec_files) usage_message;
 
   let addresses = List.map (fun address_string ->
     match Str.split (Str.regexp ":") address_string with
-    | [domain; port] ->
-        let inet_addr = Unix.inet_addr_of_string domain in
+    | [ip; port] ->
+        let inet_addr = Unix.inet_addr_of_string ip in
         let port_num = int_of_string port in
         Unix.ADDR_INET (inet_addr, port_num)
     | _ -> failwith "Addresses must be of the form <ip>:<port>"
@@ -116,12 +118,12 @@ Connects to a running ospecl_server at the given address, and sends each spec fi
 
   let handlers = !formatter ~color:!color in
   let spec_file_stack = SafeStack.create !spec_files in
-  let servers =
+  let connections =
     let repeat n value = Array.to_list (Array.make n value) in
-    List.concat (List.map (repeat !parallel_connections) addresses)
+    List.concat (List.map (repeat !connections_per_server) addresses)
   in
 
   fire handlers Ospecl.Spec.Exec.Execution_started;
-  let threads = List.map (Thread.create (execute_remotely spec_file_stack handlers)) servers in
+  let threads = List.map (Thread.create (execute_remotely spec_file_stack handlers)) connections in
   List.iter Thread.join threads;
   fire handlers Ospecl.Spec.Exec.Execution_finished;
