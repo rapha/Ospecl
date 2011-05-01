@@ -1,19 +1,11 @@
 #!/usr/bin/env ocaml
 
-(**
- * $ ospecl_client -port <port> [spec files... ]
- *
- * Connects to a running ospecl_server on the given port, sends each spec file name, and handles the execution events as they are sent back.
- * The supplied spec files should be source files which define a single top level value - `specs : Spec.t list`.
- *)
-
 #use "topfind"
 #require "str"
 #require "unix"
 #require "ospecl"
 #thread
 
-open Printf
 
 (* thread-safe mutable stack *)
 module SafeStack : sig
@@ -33,7 +25,7 @@ end = struct
 
   let pop safe_stack =
     Mutex.lock safe_stack.lock;
-    let top = 
+    let top =
       match safe_stack.stack with
       | [] -> None
       | first::rest -> begin
@@ -75,16 +67,22 @@ let execute_remotely files handlers address =
   process_files files
 
 let _ =
-  let parallel_connections = ref 1 in
+  let usage_message =
+    let this_file = (Filename.basename Sys.argv.(0)) in
+    Printf.sprintf "usage: %s [options] [spec files... ]
 
+Connects to a running ospecl_server at the given address, and sends each spec file name to be executed there, handling the execution events as they are sent back. The supplied spec files should be source files which define a single top level value - (specs : Ospecl.Spec.t list).
+" this_file
+  in
+
+  let parallel_connections = ref 1 in
+  let color = ref false in
   let address_strings = ref [] in
   let spec_files = ref [] in
 
   let append_to list_ref value =
     list_ref := !list_ref @ [value]
   in
-
-  let color = ref false in
 
   let formatter = ref Ospecl.Console.progress in
   let formatters = [
@@ -93,22 +91,22 @@ let _ =
     ("d", Ospecl.Console.documentation);
     ("doc", Ospecl.Console.documentation);
     ("documentation", Ospecl.Console.documentation);
-  ] 
+  ]
   in
   let choose_format f =
     formatter := List.assoc f formatters
   in
 
   Arg.parse (Arg.align [
-    ("-address", Arg.String (append_to address_strings), "IP:PORT of a server to connect to");
+    ("-address", Arg.String (append_to address_strings), "IP:PORT of a server to run the specs on");
     ("-j", Arg.Set_int parallel_connections, "N number of parallel connections to each server");
     ("-color", Arg.Set color, " enable color in the output");
     ("-format", Arg.Symbol (fst (List.split formatters), choose_format), " choose a formatter");
-  ]) (append_to spec_files) "";
+  ]) (append_to spec_files) usage_message;
 
   let addresses = List.map (fun address_string ->
     match Str.split (Str.regexp ":") address_string with
-    | [domain; port] -> 
+    | [domain; port] ->
         let inet_addr = Unix.inet_addr_of_string domain in
         let port_num = int_of_string port in
         Unix.ADDR_INET (inet_addr, port_num)
@@ -118,11 +116,11 @@ let _ =
 
   let handlers = !formatter ~color:!color in
   let spec_file_stack = SafeStack.create !spec_files in
-  let servers = 
+  let servers =
     let repeat n value = Array.to_list (Array.make n value) in
     List.concat (List.map (repeat !parallel_connections) addresses)
   in
-    
+
   fire handlers Ospecl.Spec.Exec.Execution_started;
   let threads = List.map (Thread.create (execute_remotely spec_file_stack handlers)) servers in
   List.iter Thread.join threads;
