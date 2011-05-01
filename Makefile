@@ -17,9 +17,15 @@ clean:
 
 install: ospecl.cma META
 	ocamlfind install ospecl ospecl.cmi ospecl.cma META
+	ln -s `pwd`/ospecl $$HOME/bin/ospecl
+	ln -s `pwd`/ospecl_client $$HOME/bin/ospecl_client
+	ln -s `pwd`/ospecl_server $$HOME/bin/ospecl_server
 
 uninstall:
 	ocamlfind remove ospecl
+	rm $$HOME/bin/ospecl
+	rm $$HOME/bin/ospecl_client
+	rm $$HOME/bin/ospecl_server
 
 
 # simple file transforms

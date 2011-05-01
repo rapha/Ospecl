@@ -1,4 +1,4 @@
-## Overview
+# Overview
 
 Ospecl is a library for writing executable specifications for your OCaml code à la [rspec](http://rspec.info/).
 
@@ -7,7 +7,7 @@ Ospecl allows you to build *specs*, which are nested data structures combining t
 Specs are built using calls to `describe` to provide context for a group of executable examples, each constructed through `it` calls. Examples contain a single *expectation* which uses *matchers* to test whether a given value meets some criteria.
 
 
-## Usage
+# Usage
 
     let component_spec = 
       describe "some component" [
@@ -34,55 +34,49 @@ As you can see, specs may be nested arbitrarily within each other, so you can or
 A [working example](https://github.com/rapha/Ospecl/blob/master/examples/account_spec.ml) can be found in the examples directory, and another one [here](https://gist.github.com/896752#file_spec.ml).
 
 
-## Installation
+# Installation
 
     $ make install
 
-will install `ospecl` as a findlib package.
+will install `ospecl` as a findlib package and make links to `ospecl`, `ospecl_client` and `ospecl_server` in your `$HOME/bin` directory.
 
     $ make uninstall
 
-will uninstall it.
+will reverse this.
 
 
-## Matchers
+# Matchers
 
 Matchers are used to construct expectations. They are based on the idea of matchers in [hamcrest](http://code.google.com/p/hamcrest/), which is like a predicate coupled with a way of describing successful and unsucessful matches. Matchers are nice because they are both descriptive on their own, and may be composed to build arbitrary new self-describing constraints on values. Ospecl comes with a core set of matchers in `Ospecl.Matchers`, but you can define additional matchers on top of `Ospecl.Matcher` to fit your domain.
 
-## Execution
+# Execution
 
 There are several ways to execute specs.
 
-### Command line
+## Command line
 
-#### Sequentially
+### Sequentially
 
-First:
-
-    $ ln -s `pwd`/ospecl ~/bin/ospecl
-
-Thereafter:
-
-    $ ospecl -color -I dir_with_cmo_files my_spec1.ml my_spec2.ml my_spec3.ml 
+    $ ospecl -I dir_with_cmo_files my_spec1.ml my_spec2.ml my_spec3.ml 
     
 `ospecl` accepts a list of ocaml script files, each of which must define a single value called `specs` of type `Ospecl.Spec.t list`. The specs from each of these files will be executed and the results reported together.
 
-#### Parallel
+### Parallel
 
-You can start any number of `ospecl_server` s and have `ospecl_client` s connect to them with any number of parallel connections. An ospecl server will respond to each connection by forking off a new process which receives spec file names, executes the specs defined in them, and sends the execution events back to the client. You may thus request a client to open several connections to the same server, or connect it to several different servers and the client will distribute the specs across these connections.
+You can start `ospecl_server` s and have `ospecl_client` s connect to them with any number of parallel connections. An ospecl server will respond to each connection by forking off a new process which receives spec file names, executes the specs defined in them, and sends the execution events back to the client. You may thus request a client to open several connections to the same server, or connect it to several different servers and the client will distribute the specs across these connections.
 
 The servers need not be on the same machine as the client but currently no provision is made for sending the spec files themselves or the modules they reference from the client to the server, so at present they must share a filesystem in order for the server to be able to discover the spec files. The servers can be started with a list of directories to search for the referenced modules.
 
 e.g.
 
-    $ ospecl_server -I <dir_with_cmo_files> -port 7000 &
-    $ ospecl_client -address 127.0.0.1:7000 -j 4 spec/*.ml
+    $ ospecl_server -I src/ -port 7000 &
+    $ ospecl_client -j 4 -address 127.0.0.1:7000 spec/*.ml
 
 or if the client is started in a different directory from the server
 
-    $ find `pwd`/spec/*.ml | xargs ospecl_client -address 127.0.0.1:7000 -j 4
+    $ find `pwd`/spec/*.ml | xargs ospecl_client -j 4 -address 127.0.0.1:7000
 
-### Runner function
+## Runner function
 
 Specs may be executed from your own code by calling the `Ospecl.Spec.Exec.execute` function, which takes a list of `handler` s and a list of specs and executes each spec, passing the appropriate execution events to the handlers as they occur. Two sets of handlers are currently provided: `Ospecl.Console.progress` and `Ospecl.Console.documentation`. The meaning of these handlers roughly corresponds to the 'progress' and 'documentation' formats in rspec.
 
