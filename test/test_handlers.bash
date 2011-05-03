@@ -22,7 +22,7 @@ open Ospecl.Spec
 open Ospecl.Matchers
 
 let _ =
-  Ospecl.Spec.Exec.execute (Ospecl.Console.progress ~color:false) [
+  Ospecl.Spec.Exec.execute (Ospecl.Handlers.Terminal.progress ~color:false) [
     $spec_src
   ]
 EOF

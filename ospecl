@@ -33,13 +33,13 @@ let _ =
     list_ref := !list_ref @ [value]
   in
 
-  let formatter = ref Ospecl.Console.progress in
+  let formatter = ref Ospecl.Handlers.Terminal.progress in
   let formatters = [
-    ("p", Ospecl.Console.progress);
-    ("progress", Ospecl.Console.progress);
-    ("d", Ospecl.Console.documentation);
-    ("doc", Ospecl.Console.documentation);
-    ("documentation", Ospecl.Console.documentation);
+    ("p", Ospecl.Handlers.Terminal.progress);
+    ("progress", Ospecl.Handlers.Terminal.progress);
+    ("d", Ospecl.Handlers.Terminal.documentation);
+    ("doc", Ospecl.Handlers.Terminal.documentation);
+    ("documentation", Ospecl.Handlers.Terminal.documentation);
   ] 
   in
   let choose_format f =
