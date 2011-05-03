@@ -7,33 +7,33 @@
 #thread
 
 
-(* thread-safe mutable stack *)
-module SafeStack : sig
+(* thread-safe mutable sequence *)
+module SafeSeq : sig
   type 'a t
   val create : 'a list -> 'a t
-  val pop : 'a t -> 'a option
+  val next : 'a t -> 'a option
 end = struct
   type 'a t = {
-    mutable stack : 'a list;
+    mutable seq : 'a list;
     lock : Mutex.t
   }
 
   let create items = {
-    stack = items;
+    seq = items;
     lock = Mutex.create ()
   }
 
-  let pop safe_stack =
-    Mutex.lock safe_stack.lock;
+  let next safe_seq =
+    Mutex.lock safe_seq.lock;
     let top =
-      match safe_stack.stack with
+      match safe_seq.seq with
       | [] -> None
       | first::rest -> begin
-          safe_stack.stack <- rest;
+          safe_seq.seq <- rest;
           Some first
         end
     in
-    Mutex.unlock safe_stack.lock;
+    Mutex.unlock safe_seq.lock;
     top
 end
 
@@ -56,11 +56,11 @@ let execute_file_remotely (in_chan, out_chan) handlers filename =
   flush out_chan;
   handle_next_event handlers
 
-let execute_remotely files handlers address =
+let execute_at_address files handlers address =
   let (in_chan, out_chan) as channels = Unix.open_connection address in
   let execute_file = execute_file_remotely channels handlers in
   let rec execute_next files =
-    match SafeStack.pop files with
+    match SafeSeq.next files with
     | None -> Unix.shutdown_connection in_chan
     | Some file -> begin
         execute_file file;
@@ -68,6 +68,14 @@ let execute_remotely files handlers address =
       end
   in
   execute_next files
+
+let execute_in_parallel spec_files handlers addresses =
+  let spec_file_seq = SafeSeq.create !spec_files in
+
+  fire handlers Ospecl.Spec.Exec.Execution_started;
+  let threads = List.map (Thread.create (execute_at_address spec_file_seq handlers)) addresses in
+  List.iter Thread.join threads;
+  fire handlers Ospecl.Spec.Exec.Execution_finished
 
 let _ =
   let usage_message =
@@ -101,7 +109,7 @@ Connects to a running ospecl_server at the given address, and sends each spec fi
 
   Arg.parse (Arg.align [
     ("-address", Arg.String (append_to address_strings), "IP:PORT of a server to run the specs on");
-    ("-j", Arg.Set_int connections_per_server, "N number of parallel connections to each server");
+    ("-j", Arg.Set_int connections_per_server, "N number of parallel repeated_addresses to each server");
     ("-color", Arg.Set color, " enable color in the output");
     ("-format", Arg.Symbol (fst (List.split formatters), choose_format), " choose a formatter");
   ]) (append_to spec_files) usage_message;
@@ -117,13 +125,9 @@ Connects to a running ospecl_server at the given address, and sends each spec fi
   in
 
   let handlers = !formatter ~color:!color in
-  let spec_file_stack = SafeStack.create !spec_files in
-  let connections =
+  let repeated_addresses =
     let repeat n value = Array.to_list (Array.make n value) in
     List.concat (List.map (repeat !connections_per_server) addresses)
   in
 
-  fire handlers Ospecl.Spec.Exec.Execution_started;
-  let threads = List.map (Thread.create (execute_remotely spec_file_stack handlers)) connections in
-  List.iter Thread.join threads;
-  fire handlers Ospecl.Spec.Exec.Execution_finished;
+  execute_in_parallel spec_files handlers repeated_addresses
