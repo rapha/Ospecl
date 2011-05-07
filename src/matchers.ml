@@ -30,7 +30,7 @@ let within epsilon expected =
   let description = "within " ^ (string_of_float epsilon) ^ " of " ^ (string_of_float expected) in
   let test actual =
     (* equality check deals with infinities *)
-    if expected = actual or (abs_float (expected -. actual)) < epsilon then
+    if expected = actual || (abs_float (expected -. actual)) < epsilon then
       Matched (string_of_float actual)
     else
       Mismatched (string_of_float actual)
