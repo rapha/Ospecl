@@ -1,0 +1,98 @@
+#!/usr/bin/env jocaml
+
+#load "str.cma"
+#load "unix.cma"
+#load "ospecl.cma"
+
+let distribute worker jobs addresses =
+  def start(address::rest_addresses) & todo(job::rest_jobs) & num_running(n) =
+     let channel_pair = Unix.open_connection address in
+     run(channel_pair, job) & start(rest_addresses) & todo(rest_jobs) & num_running(n+1)
+   or start([]) & todo(jobs) = todo(jobs)
+   or run(channel_pair, job) = worker job channel_pair; finished(channel_pair)
+   or finished(channel_pair) & todo(job::rest_jobs) = run(channel_pair, job) & todo(rest_jobs)
+   or finished(channel_pair) & todo([]) & num_running(n) =
+     Unix.shutdown_connection (fst channel_pair);
+     num_running(n-1) & todo([])
+   or todo([]) & num_running(0) & wait () = reply to wait
+  in
+  spawn start(addresses) & todo(jobs) & num_running(0);
+  wait()
+
+let fire handlers event =
+  List.iter (fun handle -> handle event) handlers
+
+let execute_remotely handlers spec_file (in_chan, out_chan) =
+  let rec handle_events in_chan =
+    let open Ospecl.Spec.Exec in
+    match input_value in_chan with
+    | Execution_finished -> () (* last event, so stop handling *)
+    | Execution_started -> handle_events in_chan (* skip this *)
+    | event -> begin
+        fire handlers event;
+        handle_events in_chan
+      end
+  in
+  output_string out_chan (spec_file ^ "\n");
+  flush out_chan;
+  handle_events in_chan
+
+let execute_distributed handlers spec_files addresses =
+  fire handlers Ospecl.Spec.Exec.Execution_started;
+  distribute (execute_remotely handlers) spec_files addresses;
+  fire handlers Ospecl.Spec.Exec.Execution_finished
+
+let _ =
+  let usage_message =
+    let this_file = (Filename.basename Sys.argv.(0)) in
+    Printf.sprintf "usage: %s [options] [spec files... ]
+
+Connects to a running ospecl_server at the given address, and sends each spec file name to be executed there, handling the execution events as they are sent back. The supplied spec files should be source files which define a single top level value - (specs : Ospecl.Spec.t list).
+" this_file
+  in
+
+  let connections_per_server = ref 1 in
+  let color = ref false in
+  let address_strings = ref [] in
+  let spec_files = ref [] in
+
+  let append_to list_ref value =
+    list_ref := !list_ref @ [value]
+  in
+
+  let formatter = ref Ospecl.Handlers.Terminal.progress in
+  let formatters = [
+    ("p", Ospecl.Handlers.Terminal.progress);
+    ("progress", Ospecl.Handlers.Terminal.progress);
+    ("d", Ospecl.Handlers.Terminal.documentation);
+    ("documentation", Ospecl.Handlers.Terminal.documentation);
+  ]
+  in
+  let choose_format f =
+    formatter := List.assoc f formatters
+  in
+
+  Arg.parse (Arg.align [
+    ("-address", Arg.String (append_to address_strings), "IP:PORT of a server to run the specs on");
+    ("-j", Arg.Set_int connections_per_server, "N number of parallel repeated_addresses to each server");
+    ("-color", Arg.Set color, " enable color in the output");
+    ("-format", Arg.Symbol (fst (List.split formatters), choose_format), " choose a formatter");
+  ]) (append_to spec_files) usage_message;
+
+  let addresses = List.map (fun address_string ->
+    match Str.split (Str.regexp ":") address_string with
+    | [ip; port] ->
+        let inet_addr = Unix.inet_addr_of_string ip in
+        let port_num = int_of_string port in
+        Unix.ADDR_INET (inet_addr, port_num)
+    | _ -> failwith "Addresses must be of the form <ip>:<port>"
+  ) !address_strings
+  in
+
+  let handlers = !formatter ~color:!color in
+  let repeated_addresses =
+    let repeat n value = Array.to_list (Array.make n value) in
+    List.concat (List.map (repeat !connections_per_server) addresses)
+  in
+
+  execute_distributed handlers !spec_files repeated_addresses
