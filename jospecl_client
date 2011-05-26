@@ -4,23 +4,42 @@
 #load "unix.cma"
 #load "ospecl.cma"
 
-let distribute worker jobs addresses =
-  def start(address::rest_addresses) & todo(job::rest_jobs) & num_running(n) =
-     let channel_pair = Unix.open_connection address in
-     run(channel_pair, job) & start(rest_addresses) & todo(rest_jobs) & num_running(n+1)
-   or start([]) & todo(jobs) = todo(jobs)
-   or run(channel_pair, job) = worker job channel_pair; finished(channel_pair)
-   or finished(channel_pair) & todo(job::rest_jobs) = run(channel_pair, job) & todo(rest_jobs)
-   or finished(channel_pair) & todo([]) & num_running(n) =
-     Unix.shutdown_connection (fst channel_pair);
-     num_running(n-1) & todo([])
-   or todo([]) & num_running(0) & wait () = reply to wait
+let string_of_sockaddr = function
+  | Unix.ADDR_INET (inet_addr, port_num) ->
+      Unix.string_of_inet_addr inet_addr ^ ":" ^ string_of_int port_num
+  | Unix.ADDR_UNIX filename ->
+      filename
+
+let distribute liaise jobs addresses =
+  def start(address::rest_addresses) & todo(job::rest_jobs) & num_open(n) =
+    let connection = try Some (Unix.open_connection address) with _ -> None in
+    match connection with
+    | Some conn ->
+        run(conn, job) & start(rest_addresses) & todo(rest_jobs) & num_open(n+1)
+    | None -> begin
+        prerr_endline ("Could not connect to " ^ string_of_sockaddr address);
+        start(rest_addresses) & todo(job::rest_jobs) & num_open(n)
+      end
+  or start([]) & todo(job::rest_jobs) & num_open(0) & wait () =
+    reply failwith "Could not connect to any address" to wait
+  or run(connection, job) & start([]) =
+    liaise job connection; finished(connection) & start([])
+  or start(address::_) & todo([]) =
+    start([]) & todo([])
+  or start([]) & todo(job::rest_jobs) & finished(connection) =
+    run(connection, job) & todo(rest_jobs) & start([])
+  or start([]) & todo([]) & finished(connection) & num_open(n) =
+    Unix.shutdown_connection (fst connection);
+    num_open(n-1) & todo([]) & start([])
+  or todo([]) & num_open(0) & wait () =
+    reply to wait
   in
-  spawn start(addresses) & todo(jobs) & num_running(0);
+  spawn start(addresses) & todo(jobs) & num_open(0);
   wait()
 
 let fire handlers event =
-  List.iter (fun handle -> handle event) handlers
+  List.iter (fun handle -> handle event) handlers;
+  flush stdout
 
 let execute_remotely handlers spec_file (in_chan, out_chan) =
   let rec handle_events in_chan =
