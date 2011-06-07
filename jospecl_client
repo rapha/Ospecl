@@ -4,28 +4,21 @@
 #load "unix.cma"
 #load "ospecl.cma"
 
-let distribute liaise jobs addresses =
-  def connect(address) & todo(job::_ as jobs) =
-    (let conn = Unix.open_connection address in connected(conn)) & todo(jobs)
-  or connected(conn) & todo(job::rest_jobs) & num_open(n) =
-    run(conn, job) & todo(rest_jobs) & num_open(n+1)
-  or run(connection, job) =
-    liaise connection job; finished(connection)
-  or finished(connection) & todo(job::rest_jobs) =
-    run(connection, job) & todo(rest_jobs)
-  or finished(connection) & todo([]) =
-    (Unix.shutdown_connection (fst connection); disconnected ()) & todo([])
-  or disconnected () & num_open(n) =
-    num_open(n-1)
-  or num_open(0) & todo([]) & wait () =
-    reply to wait
+let (|>) x f = f x
+
+let map_any workers items =
+  def inputs(item::rest_items) & available(worker::rest_workers) & running(n) = 
+    finished(worker, worker item) & inputs(rest_items) & available(rest_workers) & running(n+1)
+  or  finished(worker, result) & results(sofar) & available(workers) & running(n) = 
+    results(result::sofar) & available(worker::workers) & running(n-1)
+  or  inputs([]) & running(0) & results(all) & wait () = 
+    reply all to wait
   in
-  List.iter (fun address -> spawn connect(address)) addresses;
-  spawn todo(jobs) & num_open(0);
-  wait()
+  spawn inputs(items) & available(workers) & running(0) & results([]);
+  wait ()
 
 let fire handlers event =
-  List.iter (fun handle -> handle event) handlers;
+  handlers |> List.iter (fun handle -> handle event);
   flush stdout
 
 let execute_remotely handlers (in_chan, out_chan) spec_file =
@@ -45,7 +38,9 @@ let execute_remotely handlers (in_chan, out_chan) spec_file =
 
 let execute_distributed handlers spec_files addresses =
   fire handlers Ospecl.Spec.Exec.Execution_started;
-  distribute (execute_remotely handlers) spec_files addresses;
+  let connections = map_any [Unix.open_connection] addresses in
+  map_any (connections |> List.map (execute_remotely handlers)) spec_files |> ignore;
+  map_any [fun (in_chan,out_chan) -> Unix.shutdown_connection in_chan] connections |> ignore;
   fire handlers Ospecl.Spec.Exec.Execution_finished
 
 let _ =
@@ -85,20 +80,18 @@ Connects to a running ospecl_server at the given address, and sends each spec fi
     ("-format", Arg.Symbol (fst (List.split formatters), choose_format), " choose a formatter");
   ]) (append_to spec_files) usage_message;
 
-  let addresses = List.map (fun address_string ->
-    match Str.split (Str.regexp ":") address_string with
-    | [ip; port] ->
-        let inet_addr = Unix.inet_addr_of_string ip in
-        let port_num = int_of_string port in
-        Unix.ADDR_INET (inet_addr, port_num)
-    | _ -> failwith "Addresses must be of the form <ip>:<port>"
-  ) !address_strings
+  let addresses = !address_strings 
+    |> List.map (Str.split (Str.regexp ":"))
+    |> List.map (function 
+         | [ip; port] -> Unix.ADDR_INET (Unix.inet_addr_of_string ip, int_of_string port)
+         | _ -> failwith "Addresses must be of the form <ip>:<port>"
+       )
   in
 
   let handlers = !formatter ~color:!color in
   let repeated_addresses =
     let repeat n value = Array.to_list (Array.make n value) in
-    List.concat (List.map (repeat !connections_per_server) addresses)
+    addresses |> List.map (repeat !connections_per_server) |> List.concat
   in
 
   execute_distributed handlers !spec_files repeated_addresses
