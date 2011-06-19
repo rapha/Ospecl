@@ -1,6 +1,4 @@
-#use "topfind"
-#require "unix"
-#require "ospecl"
+#load "unix.cma"
 
 open Ospecl.Spec
 open Ospecl.Matchers

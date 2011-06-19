@@ -6,8 +6,8 @@ test_units: unit_tests.byte test/test_handlers.bash
 	ocamlrun -b unit_tests.byte && bash test/test_handlers.bash
 
 test_client_server: examples ospecl_server ospecl_client jospecl_client
-	sh test/test_client_server.sh './ospecl_client' 2>/dev/null >/dev/null
-	sh test/test_client_server.sh './jospecl_client' 2>/dev/null >/dev/null
+	sh test/test_client_server.sh 'ospecl' 2>/dev/null >/dev/null
+	sh test/test_client_server.sh 'jospecl' 2>/dev/null >/dev/null
 
 unit_tests.byte: ospecl.cma test/test_matcher.cmo test/test_matchers.cmo test/test_spec.cmo
 	$(OCAMLC) -o unit_tests.byte str.cma unix.cma ospecl.cma test/test_matcher.cmo test/test_matchers.cmo test/test_spec.cmo

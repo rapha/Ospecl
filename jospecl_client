@@ -1,47 +1,47 @@
 #!/usr/bin/env jocaml
 
 #load "str.cma"
-#load "unix.cma"
 #load "ospecl.cma"
 
 let (|>) x f = f x
 
-let map_any workers items =
-  def inputs(item::rest_items) & available(worker::rest_workers) & running(n) = 
-    finished(worker, worker item) & inputs(rest_items) & available(rest_workers) & running(n+1)
-  or  finished(worker, result) & results(sofar) & available(workers) & running(n) = 
-    results(result::sofar) & available(worker::workers) & running(n-1)
-  or  inputs([]) & running(0) & results(all) & wait () = 
-    reply all to wait
+let map_with_any workers items =
+  def inputs(item::rest_items) & available(worker::rest_workers) =
+    finished(worker, worker item) & inputs(rest_items) & available(rest_workers)
+
+  or  finished(worker, result) & inputs(item::rest_items) & available([]) & outputs(results) & num_remaining(n) =
+    finished(worker, worker item) & inputs(rest_items) & available([]) & outputs(result::results) & num_remaining(n-1)
+
+  or  finished(worker, result) & inputs([]) & outputs(results) & num_remaining(n) =
+    outputs(result::results) & inputs([]) & num_remaining(n-1)
+
+  or  inputs([]) & outputs(results) & num_remaining(0) & wait () =
+    reply results to wait
   in
-  spawn inputs(items) & available(workers) & running(0) & results([]);
+  spawn inputs(items) & outputs([]) & available(workers) & num_remaining(List.length items);
   wait ()
 
 let fire handlers event =
   handlers |> List.iter (fun handle -> handle event);
   flush stdout
 
-let execute_remotely handlers (in_chan, out_chan) spec_file =
-  let rec handle_events in_chan =
-    let open Ospecl.Spec.Exec in
-    match input_value in_chan with
-    | Execution_finished -> () (* last event, so stop handling *)
-    | Execution_started -> handle_events in_chan (* skip this *)
-    | event -> begin
-        fire handlers event;
-        handle_events in_chan
-      end
+let execute handlers spec_files addresses =
+  let module Event = Ospecl.Spec.Exec in
+  def handle_event (event) =
+    (match event with
+    | Event.Execution_finished | Event.Execution_started -> () (* skip these *)
+    | event -> fire handlers event);
+    reply to handle_event
   in
-  output_string out_chan (spec_file ^ "\n");
-  flush out_chan;
-  handle_events in_chan
-
-let execute_distributed handlers spec_files addresses =
-  fire handlers Ospecl.Spec.Exec.Execution_started;
-  let connections = map_any [Unix.open_connection] addresses in
-  map_any (connections |> List.map (execute_remotely handlers)) spec_files |> ignore;
-  map_any [fun (in_chan,out_chan) -> Unix.shutdown_connection in_chan] connections |> ignore;
-  fire handlers Ospecl.Spec.Exec.Execution_finished
+  fire handlers Event.Execution_started;
+  let spec_runners : (string * Event.handler -> unit) list =
+    addresses
+    |> map_with_any [Join.Ns.of_sockaddr]
+    |> map_with_any [fun name_server -> Join.Ns.lookup name_server "run_spec_file"]
+  in
+  let files_with_event_handler = spec_files |> List.map (fun file -> (file, handle_event)) in
+  ignore (map_with_any spec_runners files_with_event_handler);
+  fire handlers Event.Execution_finished
 
 let _ =
   let usage_message =
@@ -52,7 +52,6 @@ Connects to a running ospecl_server at the given address, and sends each spec fi
 " this_file
   in
 
-  let connections_per_server = ref 1 in
   let color = ref false in
   let address_strings = ref [] in
   let spec_files = ref [] in
@@ -75,23 +74,18 @@ Connects to a running ospecl_server at the given address, and sends each spec fi
 
   Arg.parse (Arg.align [
     ("-address", Arg.String (append_to address_strings), "IP:PORT of a server to run the specs on");
-    ("-j", Arg.Set_int connections_per_server, "N number of parallel repeated_addresses to each server");
     ("-color", Arg.Set color, " enable color in the output");
     ("-format", Arg.Symbol (fst (List.split formatters), choose_format), " choose a formatter");
   ]) (append_to spec_files) usage_message;
 
-  let addresses = !address_strings 
+  let addresses = !address_strings
     |> List.map (Str.split (Str.regexp ":"))
-    |> List.map (function 
+    |> List.map (function
          | [ip; port] -> Unix.ADDR_INET (Unix.inet_addr_of_string ip, int_of_string port)
          | _ -> failwith "Addresses must be of the form <ip>:<port>"
        )
   in
 
   let handlers = !formatter ~color:!color in
-  let repeated_addresses =
-    let repeat n value = Array.to_list (Array.make n value) in
-    addresses |> List.map (repeat !connections_per_server) |> List.concat
-  in
 
-  execute_distributed handlers !spec_files repeated_addresses
+  execute handlers !spec_files addresses

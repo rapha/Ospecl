@@ -86,7 +86,6 @@ Connects to a running ospecl_server at the given address, and sends each spec fi
 " this_file
   in
 
-  let connections_per_server = ref 1 in
   let color = ref false in
   let address_strings = ref [] in
   let spec_files = ref [] in
@@ -109,7 +108,6 @@ Connects to a running ospecl_server at the given address, and sends each spec fi
 
   Arg.parse (Arg.align [
     ("-address", Arg.String (append_to address_strings), "IP:PORT of a server to run the specs on");
-    ("-j", Arg.Set_int connections_per_server, "N number of parallel repeated_addresses to each server");
     ("-color", Arg.Set color, " enable color in the output");
     ("-format", Arg.Symbol (fst (List.split formatters), choose_format), " choose a formatter");
   ]) (append_to spec_files) usage_message;
@@ -125,9 +123,5 @@ Connects to a running ospecl_server at the given address, and sends each spec fi
   in
 
   let handlers = !formatter ~color:!color in
-  let repeated_addresses =
-    let repeat n value = Array.to_list (Array.make n value) in
-    List.concat (List.map (repeat !connections_per_server) addresses)
-  in
 
-  execute_in_parallel spec_files handlers repeated_addresses
+  execute_in_parallel spec_files handlers addresses
