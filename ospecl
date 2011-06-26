@@ -64,4 +64,5 @@ let _ =
   List.iter Topdirs.dir_directory !include_dirs;
   let all_specs = List.concat (List.map specs_of_file !files) in
   let filtered = Ospecl.Spec.filter (Str.regexp !pattern) all_specs in
+
   Ospecl.Spec.Exec.execute handlers filtered

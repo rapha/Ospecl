@@ -34,7 +34,7 @@ let execute handlers spec_files addresses =
     reply to handle_event
   in
   fire handlers Event.Execution_started;
-  let spec_runners : (string * Event.handler -> unit) list =
+  let spec_runners : ((string * Event.handler) -> unit) list =
     addresses
     |> map_with_any [Join.Ns.of_sockaddr]
     |> map_with_any [fun name_server -> Join.Ns.lookup name_server "run_spec_file"]
