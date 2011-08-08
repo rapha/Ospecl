@@ -1,20 +1,6 @@
 (* private helpers *)
 
-(* constructing specs *)
 type expectation = Expectation of (unit -> unit) | Pending of string
-
-type t = Example of string list * expectation | Group of string list * t list
-
-let rec contextualise context = function
-  | Example (path, expectation) -> 
-      Example (context @ path, expectation)
-  | Group (path, specs) -> 
-      let full_path = context @ path in
-      Group (full_path, List.map (contextualise context) specs)
-
-let it description expectation = Example ([description], expectation)
-let describe name specs = Group ([name], List.map (contextualise [name]) specs)
-
 
 (* expressing expectations *)
 exception Expectation_failed of string
@@ -28,6 +14,24 @@ let expect value matcher =
         let message = Printf.sprintf "Expected %s but got %s" (Matcher.description_of matcher) desc in
         raise (Expectation_failed message)
   end
+
+type t = Example of string list * expectation | Group of string list * t list
+
+let rec contextualise context = function
+  | Example (path, expectation) -> 
+      Example (context @ path, expectation)
+  | Group (path, specs) -> 
+      let full_path = context @ path in
+      Group (full_path, List.map (contextualise context) specs)
+
+(* constructing specs *)
+let it description expectation = Example ([description], expectation)
+
+let they description_of_actual matcher actuals =
+  List.map (fun actual -> it (description_of_actual actual) (expect actual matcher)) actuals
+
+let describe name specs = Group ([name], List.map (contextualise [name]) specs)
+
 
 let pending blocker = Pending blocker
 

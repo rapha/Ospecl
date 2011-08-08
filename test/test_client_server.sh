@@ -4,7 +4,7 @@ set -o errexit
 server="./$1_server"
 client="./$1_client"
 
-trap "echo 'Killing servers' >&2; jobs -l | awk '/examples/ {print \$2}' | xargs kill" EXIT
+trap "echo 'Killing servers' >&2; jobs -p | xargs kill" EXIT
 
 $server -I "$(pwd)/examples/" -l 7000 &
 $server -I "$(pwd)/examples/" -l 7001 &

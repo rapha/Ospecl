@@ -5,8 +5,10 @@ type expectation
 (* information about how the component conforms to the spec *)
 type result =  Passed of string | Failed of string * exn | Skipped of string * string
 
-(* build a single spec from a description and test function *)
+(* build a single spec from a description an expectation *)
 val it : string -> expectation -> t
+(* build a list of specs from a single matcher which a list of values must match *)
+val they : ('a -> string) -> 'a Matcher.t -> 'a list -> t list
 (* logically group specs *)
 val describe : string -> t list -> t
 

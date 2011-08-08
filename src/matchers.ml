@@ -51,14 +51,16 @@ let equal_to_option string_of_item =
   in
   equal_to string_of_option
 
-let equal_to_list string_of_item =
-  let rec join = function
-    | [] -> ""
-    | [item] -> string_of_item item
-    | item :: rest -> string_of_item item ^ "; " ^ join rest
-  in
-  equal_to (fun items -> "[" ^ join items ^ "]")
+let rec join = function
+  | [] -> ""
+  | [item] -> item
+  | item :: rest -> item ^ "; " ^ join rest
 
+let equal_to_list string_of_item =
+  equal_to (fun items -> "[" ^ join (List.map string_of_item items) ^ "]")
+
+let equal_to_array string_of_item =
+  equal_to (fun items -> "[|" ^ join (List.map string_of_item (Array.to_list items)) ^ "|]")
 
 let has_item matcher =
   let description = "has item that " ^ description_of matcher in
