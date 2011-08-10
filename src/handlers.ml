@@ -38,7 +38,7 @@ module Terminal = struct
           (if !pending > 0 then (sprintf ", %d %s" !pending "pending") else "")
         in
         let text_color = (if !failures > 0 then red_text else if !pending > 0 then yellow_text else green_text) in
-        print_string (if color then text_color message else message); 
+        print_string (if color then text_color message else message);
         print_string (normal_text);
         flush stdout
 
@@ -95,9 +95,9 @@ module Terminal = struct
         | Failed (desc, ex) -> begin
             incr count;
             let error_msg = Printexc.to_string ex in
-            report := !report ^ (sprintf "  %d) %s\n        %s\n\n" 
-              !count 
-              desc 
+            report := !report ^ (sprintf "  %d) %s\n        %s\n\n"
+              !count
+              desc
               (if color then red_text error_msg else error_msg))
           end
         | Passed _ | Skipped _ -> ()
@@ -117,7 +117,7 @@ module Terminal = struct
     let open Spec.Exec in
     function
     | Example_finished result -> begin
-        let str = 
+        let str =
           match result with
           | Passed _ -> "."
           | Skipped _ -> "*"

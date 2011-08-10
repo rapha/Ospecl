@@ -11,6 +11,8 @@ let expect value matcher =
     | Matcher.Matched _ ->
         ()
     | Matcher.Mismatched desc ->
+        (* TODO find difference between descriptions of expected and actual
+         * and underline, or otherwise colour those bits of text *)
         let message = Printf.sprintf "Expected %s but got %s" (Matcher.description_of matcher) desc in
         raise (Expectation_failed message)
   end
@@ -18,9 +20,9 @@ let expect value matcher =
 type t = Example of string list * expectation | Group of string list * t list
 
 let rec contextualise context = function
-  | Example (path, expectation) -> 
+  | Example (path, expectation) ->
       Example (context @ path, expectation)
-  | Group (path, specs) -> 
+  | Group (path, specs) ->
       let full_path = context @ path in
       Group (full_path, List.map (contextualise context) specs)
 
@@ -41,17 +43,17 @@ let join path = match path with
   | [] -> ""
   | first::rest -> List.fold_left (fun result element -> result ^ " " ^ element) first rest
 
-let filter regex specs = 
+let filter regex specs =
   let description_matches spec = match spec with
     | Example (path, _) -> begin
         let full_description = join path in
-        try 
+        try
           ignore (Str.search_forward regex full_description 0);
           Some spec
         with Not_found ->
           None
       end
-    | Group _ -> 
+    | Group _ ->
         Some spec
   in
   let rec some_values = function
@@ -61,7 +63,7 @@ let filter regex specs =
   in
   let rec filter_spec selector spec =
     match spec with
-    | Example (path, _) -> 
+    | Example (path, _) ->
         selector spec
     | Group (path, specs) ->
         let selected = some_values (List.map (filter_spec selector) specs) in

@@ -1,3 +1,6 @@
+val anything : ('a -> string) -> 'a Matcher.t
+val is_some : 'a Matcher.t -> 'a option Matcher.t
+val whose : (string -> string) -> ('a -> 'b) -> 'b Matcher.t -> 'a Matcher.t
 val less_than : int -> int Matcher.t
 val not' : 'a Matcher.t -> 'a Matcher.t
 val equal_to : ('a -> string) -> 'a -> 'a Matcher.t

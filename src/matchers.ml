@@ -1,5 +1,7 @@
 open Matcher
 
+let anything to_string = make "anything" (fun thing -> Matched (to_string thing))
+
 let less_than limit =
   let description = "less than " ^ (string_of_int limit) in
   let test actual =
@@ -15,6 +17,26 @@ let not' matcher =
     match check actual matcher with
     | Matched actual_desc -> Mismatched actual_desc
     | Mismatched actual_desc -> Matched actual_desc
+  in make description test
+
+let is_some matcher =
+  let description = "Some (" ^ description_of matcher ^ ")" in
+  let test actual =
+    match actual with
+    | None -> Mismatched "None"
+    | Some value -> begin
+        match check value matcher with
+        | Matched actual -> Matched ("Some (" ^ actual ^ ")")
+        | Mismatched actual -> Mismatched ("Some (" ^ actual ^ ")")
+      end
+  in make description test
+
+let whose describe_with transform matcher =
+  let description = describe_with (description_of matcher) in
+  let test actual =
+    match check (transform actual) matcher with 
+    | Matched actual -> Matched (describe_with actual)
+    | Mismatched actual -> Mismatched (describe_with actual)
   in make description test
 
 let equal_to string_of expected =
