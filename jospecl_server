@@ -20,7 +20,7 @@ let spec_file_runner verbose =
     let specs = specs_of_file spec_file in
     Ospecl.Spec.Exec.execute [send_back] specs;
     reply to run_spec_file
-  in  
+  in
   run_spec_file
 
 let _ =

@@ -63,8 +63,8 @@ let test_exec =
     ]
   ]
   in
-  let expected_events = 
-    let open Exec in 
+  let expected_events =
+    let open Exec in
     [
       Execution_started;
       Group_started ["1"];

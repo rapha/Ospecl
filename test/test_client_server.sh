@@ -17,7 +17,7 @@ $client
 echo '=== 1 server 1 spec ==='
 $client -color -address 127.0.0.1:7000 $(pwd)/examples/account_spec.ml
 echo '=== 2 servers 1 spec ==='
-$client -color -address 127.0.0.1:7000 -address 127.0.0.1:7000 $(pwd)/examples/account_spec.ml 
+$client -color -address 127.0.0.1:7000 -address 127.0.0.1:7000 $(pwd)/examples/account_spec.ml
 echo '=== 1 server 2 specs ==='
 $client -color -address 127.0.0.1:7000 $(pwd)/examples/account_spec.ml $(pwd)/examples/account_spec.ml
 echo '=== 2 servers 2 specs ==='

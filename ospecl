@@ -23,7 +23,7 @@ let specs_of_file filename =
     failwith (sprintf "Could not use file %s" filename)
 
 let _ =
-  let usage_message = 
+  let usage_message =
     let this_file = (Filename.basename Sys.argv.(0)) in
     sprintf "$ %s [options] [spec files]\n" this_file in
 
@@ -40,7 +40,7 @@ let _ =
     ("d", Ospecl.Handlers.Terminal.documentation);
     ("doc", Ospecl.Handlers.Terminal.documentation);
     ("documentation", Ospecl.Handlers.Terminal.documentation);
-  ] 
+  ]
   in
   let choose_format f =
     formatter := List.assoc f formatters

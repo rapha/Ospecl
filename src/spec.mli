@@ -17,7 +17,7 @@ val expect : 'a -> 'a Matcher.t -> expectation
 val (=~) : 'a -> 'a Matcher.t -> expectation
 val pending : string -> expectation
 
-(* Filters a list of specs, removing: 
+(* Filters a list of specs, removing:
  *   all examples whose description does not match the regex
  *   all groups which do not contain any matching examples
  *)

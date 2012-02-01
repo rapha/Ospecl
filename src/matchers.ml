@@ -34,7 +34,7 @@ let is_some matcher =
 let whose describe_with transform matcher =
   let description = describe_with (description_of matcher) in
   let test actual =
-    match check (transform actual) matcher with 
+    match check (transform actual) matcher with
     | Matched actual -> Matched (describe_with actual)
     | Mismatched actual -> Mismatched (describe_with actual)
   in make description test
@@ -68,7 +68,7 @@ let false' = equal_to_bool false
 
 let equal_to_option string_of_item =
   let string_of_option = function
-    | None -> "None" 
+    | None -> "None"
     | Some item -> "Some (" ^ string_of_item item ^ ")"
   in
   equal_to string_of_option

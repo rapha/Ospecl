@@ -34,8 +34,8 @@ let specs = [
         ];
         describe "that is negative" [
           it "fails" begin
-            expect 
-              (fun _ -> Account.deposit (-1) empty) 
+            expect
+              (fun _ -> Account.deposit (-1) empty)
               (raise_exn (Invalid_argument "Cannot deposit a negative amount: -1"))
           end
         ];
@@ -53,7 +53,7 @@ let specs = [
           ];
           describe "and more than the current balance" [
             it "fails" begin
-              expect 
+              expect
                 (fun _ -> Account.withdraw 50 empty)
                 (raise_exn (Account.Insufficient_funds 0))
             end;
